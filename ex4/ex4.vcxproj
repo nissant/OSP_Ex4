@@ -141,6 +141,14 @@
   <ItemGroup>
     <ClCompile Include="main.c" />
     <ClCompile Include="PrintBoard.c" />
+    <ClCompile Include="Client_Module.c" />
+    <ClCompile Include="Server_Module.c" />
+    <ClCompile Include="SocketSendRecvTools.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Client_Module.h" />
+    <ClInclude Include="Server_Module.h" />
+    <ClInclude Include="SocketSendRecvTools.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

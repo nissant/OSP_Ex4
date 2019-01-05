@@ -21,5 +21,25 @@
     <ClCompile Include="PrintBoard.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Client_Module.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Server_Module.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SocketSendRecvTools.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Client_Module.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Server_Module.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SocketSendRecvTools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
