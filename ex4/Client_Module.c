@@ -78,10 +78,37 @@ static DWORD SendDataThread(void)
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
-void MainClient(char *argv[])
+/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
+
+//Sending data to the server
+static DWORD User_input(void)
+{
+	char SendStr[256];
+	TransferResult_t SendRes;
+
+	while (1)
+	{
+		gets_s(SendStr, sizeof(SendStr)); //Reading a string from the keyboard
+
+		if (STRINGS_ARE_EQUAL(SendStr, "quit"))
+			return 0x555; //"quit" signals an exit from the client side
+
+		SendRes = SendString(SendStr, m_socket);
+
+		if (SendRes == TRNS_FAILED)
+		{
+			printf("Socket error while trying to write data to socket\n");
+			return 0x555;
+		}
+	}
+}
+
+/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
+
+void MainClient(int argc, char *argv[])
 {
 	SOCKADDR_IN clientService;
-	HANDLE hThread[2];
+	HANDLE hThread[3];
 
     // Initialize Winsock.
     WSADATA wsaData; //Create a WSADATA object called wsaData.
@@ -159,15 +186,26 @@ void MainClient(char *argv[])
 		0,
 		NULL
 	);
+	hThread[2] = CreateThread(
+		NULL,
+		0,
+		(LPTHREAD_START_ROUTINE)User_input,
+		NULL,
+		0,
+		NULL
+	);
 
-	WaitForMultipleObjects(2,hThread,FALSE,INFINITE);
+
+	WaitForMultipleObjects(3,hThread,FALSE,INFINITE);
 
 	TerminateThread(hThread[0],0x555);
 	TerminateThread(hThread[1],0x555);
+	TerminateThread(hThread[2],0x555);
 
 	CloseHandle(hThread[0]);
 	CloseHandle(hThread[1]);
-	
+	CloseHandle(hThread[2]);
+
 	closesocket(m_socket);
 	
 	WSACleanup();
