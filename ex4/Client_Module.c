@@ -17,7 +17,7 @@ static DWORD RecvDataThread(void)
 {
 	TransferResult_t RecvRes;
 
-	while (1) 
+	while (!game_ended)
 	{
 		char *AcceptedStr = NULL;
 		RecvRes = ReceiveString( &AcceptedStr , m_socket );
@@ -25,11 +25,13 @@ static DWORD RecvDataThread(void)
 		if ( RecvRes == TRNS_FAILED )
 		{
 			printf("Socket error while trying to write data to socket\n");
+			game_ended = 1;
 			return 0x555;
 		}
 		else if ( RecvRes == TRNS_DISCONNECTED )
 		{
 			printf("Server closed connection. Bye!\n");
+			game_ended = 1;
 			return 0x555;
 		}
 		else
@@ -37,7 +39,7 @@ static DWORD RecvDataThread(void)
 			printf("%s\n",AcceptedStr);
 		}
 		
-		free(AcceptedStr);
+
 	}
 
 	return 0;
@@ -48,7 +50,7 @@ static DWORD RecvDataThread(void)
 //Sending data to the server
 static DWORD SendDataThread(void)
 {
-	char SendStr[256];
+
 	TransferResult_t SendRes;
 
 	while (!game_ended)
@@ -84,8 +86,6 @@ static DWORD SendDataThread(void)
 static DWORD player_input(void)
 {
 	char input		[MAX_MSG_SIZE];
-	char user_name	[MAX_MSG_SIZE];
-	TransferResult_t SendRes;
 
 	printf("Enter User Name\n");
 
@@ -93,19 +93,14 @@ static DWORD player_input(void)
 	{
 		gets_s(input, sizeof(input)); //Reading a string from the keyboard
 
-		input_to_cmd(input,cmd_to_server);
-		cmd_ready = 1;			// update the sending thread that there is a new message ready
-
 		if (STRINGS_ARE_EQUAL(input, "exit"))
-			return 0x555; //"quit" signals an exit from the client side
-
-		SendRes = SendString(input, m_socket);
-
-		if (SendRes == TRNS_FAILED)
 		{
-			printf("Socket error while trying to write data to socket\n");
-			return 0x555;
+			game_ended = 1;
+			return 0x555; //"quit" signals an exit from the client side
 		}
+
+		input_to_cmd(input, cmd_to_server);
+		cmd_ready = 1;			// update the sending thread that there is a new message ready
 	}
 }
 

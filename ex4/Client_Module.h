@@ -20,8 +20,8 @@ Description		-
 	int game_ended = 0;
 	int cmd_ready = 0;
 	int connected = 0;		// global flag to know if already connected to server
-	char cmd_to_server[MAX_MSG_SIZE];
-
+	char cmd_to_server		[MAX_MSG_SIZE];
+	char server_to_client	[MAX_MSG_SIZE];
 
 
 

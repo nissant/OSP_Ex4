@@ -19,25 +19,22 @@ void input_to_cmd(char *input, char *cmd)
 	{
 		strcpy(cmd, NEW_USER_REQUEST);
 		strcat(cmd, ":");
-		strcat(cmd, input);
+		strcat(cmd, tmp_input);
+		connected = 1;			// to not enter the "if" again. only 1st time.
 		return;
 	}
 	if (*tmp_input == 'p') // if the input is a play command
 	{
 		space_pos = find_first_space(tmp_input); // find the space pos 
-		*space_pos = '\0';
+		*space_pos = '\0'; 
 		strcpy(cmd, PLAY_REQUEST);
 		strcat(cmd, ":");			//put : inside the cmd
 		strcat(cmd, (space_pos + 1)); //put the number of column inside the cmd
-
+		return;
 	}
 	else if (*tmp_input == 'm') //if the input is a message
 	{
 		// used functions that creates a command and put in in cm
-	}
-	else if (*tmp_input == 'e') //if the input is exit
-	{
-
 	}
 }
 
