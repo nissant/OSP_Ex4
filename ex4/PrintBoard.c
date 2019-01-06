@@ -12,7 +12,7 @@
 #define YELLOW 238
 
 void PrintBoard(int board[][BOARD_WIDTH], HANDLE consoleHandle);
-
+/*
 int main()
 {
 	int board[BOARD_HEIGHT][BOARD_WIDTH] = { 0 };
@@ -28,7 +28,7 @@ int main()
 	CloseHandle(hConsole);
 	return 0;
 }
-
+*/
 /***********************************************************
 * This function prints the board, and uses O as the holes.
 * The disks are presented by red or yellow backgrounds.
