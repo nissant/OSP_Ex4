@@ -47,12 +47,6 @@ TransferResult_t SendString( const char *Str, SOCKET sd )
 		
 	TotalStringSizeInBytes = (int)( strlen(Str) + 1 ); // terminating zero also sent	
 
-	SendRes = SendBuffer( 
-		(const char *)( &TotalStringSizeInBytes ),
-		(int)( sizeof(TotalStringSizeInBytes) ), // sizeof(int) 
-		sd );
-
-	if ( SendRes != TRNS_SUCCEEDED ) return SendRes ;
 
 	SendRes = SendBuffer( 
 		(const char *)( Str ),
