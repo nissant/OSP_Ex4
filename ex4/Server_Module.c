@@ -21,6 +21,13 @@ void MainServer(char *argv[])
 	int bindRes;
 	int ListenRes;
 
+	ServerPort = (unsigned short)strtol(argv[3], NULL, 10);
+	FILE *fp_server_log = fopen(argv[2], "wt");
+	if (fp_server_log == NULL) {
+		printf("ERROR: Failed to open server log file stream, can't complete the task! \n");
+		goto file_stream_fail;
+	}
+
 	// Initialize Winsock.
     WSADATA wsaData;
     int StartupRes = WSAStartup( MAKEWORD( 2, 2 ), &wsaData );	           
@@ -65,7 +72,7 @@ void MainServer(char *argv[])
 
     service.sin_family = AF_INET;
     service.sin_addr.s_addr = Address;
-    service.sin_port = htons( SERVER_PORT ); //The htons function converts a u_short from host to TCP/IP network byte order 
+    service.sin_port = htons( ServerPort ); //The htons function converts a u_short from host to TCP/IP network byte order 
 	                                   //( which is big-endian ).
 	/*
 		The three lines following the declaration of sockaddr_in service are used to set up 
@@ -144,8 +151,12 @@ server_cleanup_2:
 server_cleanup_1:
 	if ( WSACleanup() == SOCKET_ERROR )		
 		printf("Failed to close Winsocket, error %ld. Ending program.\n", WSAGetLastError() );
-}
 
+	fclose(fp_server_log);
+
+file_stream_fail:
+
+}
 
 
 static int FindFirstUnusedThreadSlot()
