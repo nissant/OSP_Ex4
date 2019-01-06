@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 		MainServer(argv);
 	}
 	else if (strcmp(argv[1], "client") == 0) {
-		MainClient(argv);
+		MainClient(argc,argv);
 	}
 
 }
