@@ -5,19 +5,10 @@ Description		-
 */
 
 // Includes --------------------------------------------------------------------
-
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-
-#include <stdio.h>
-#include <string.h>
-#include <winsock2.h>
-
 #include "Server_Module.h"
+#include "Client_Module.h"
 #include "SocketSendRecvTools.h"
 
-
-// Global Variables ------------------------------------------------------------
-SOCKET m_socket;
 // Function Definitions --------------------------------------------------------
 
 //Reading data coming from the server

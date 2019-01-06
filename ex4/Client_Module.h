@@ -5,16 +5,16 @@ Description		-
 */
 
 // Includes --------------------------------------------------------------------
-
+#include <stdio.h>
+#include <string.h>
+#include <winsock2.h>
 #ifndef SOCKET_EXAMPLE_CLIENT_H
 	#define SOCKET_EXAMPLE_CLIENT_H	
 	// Defines ---------------------------------------------------------------------
+	#define _WINSOCK_DEPRECATED_NO_WARNINGS
 	// Global Variables ------------------------------------------------------------
+
+	SOCKET m_socket;
 	// Function Declarations -------------------------------------------------------
-
-
 	void MainClient(char *argv[]);
-
-
-
 #endif // SOCKET_EXAMPLE_CLIENT_H

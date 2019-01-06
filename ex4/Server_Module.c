@@ -11,7 +11,6 @@ Description		-
 
 
 // Function Definitions --------------------------------------------------------
-
 void MainServer(char *argv[])
 {
 	int Ind;
@@ -147,7 +146,7 @@ server_cleanup_1:
 		printf("Failed to close Winsocket, error %ld. Ending program.\n", WSAGetLastError() );
 }
 
-/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
+
 
 static int FindFirstUnusedThreadSlot()
 { 
@@ -174,7 +173,7 @@ static int FindFirstUnusedThreadSlot()
 	return Ind;
 }
 
-/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
+
 
 static void CleanupWorkerThreads()
 {
@@ -203,7 +202,7 @@ static void CleanupWorkerThreads()
 	}
 }
 
-/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
+
 
 //Service thread is the thread that opens for each successful client connection and "talks" to the client.
 static DWORD ServiceThread( SOCKET *t_socket ) 
