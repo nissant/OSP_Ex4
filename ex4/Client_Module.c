@@ -9,7 +9,9 @@ Description		-
 #include "Client_Module.h"
 #include "SocketSendRecvTools.h"
 
-// Function Definitions --------------------------------------------------------
+int stop = 0;
+
+
 
 //Reading data coming from the server
 static DWORD RecvDataThread(void)
@@ -74,17 +76,20 @@ static DWORD SendDataThread(void)
 //Sending data to the server
 static DWORD player_input(void)
 {
-	char SendStr[256];
+	char input			[MAX_MSG_SIZE];
+	char cmd_to_server	[MAX_MSG_SIZE];
+
 	TransferResult_t SendRes;
 
-	while (1)
+	while (!stop)
 	{
-		gets_s(SendStr, sizeof(SendStr)); //Reading a string from the keyboard
+	
+		input_to_cmd(input,cmd_to_server);
 
-		if (STRINGS_ARE_EQUAL(SendStr, "quit"))
+		if (STRINGS_ARE_EQUAL(input, "exit"))
 			return 0x555; //"quit" signals an exit from the client side
 
-		SendRes = SendString(SendStr, m_socket);
+		SendRes = SendString(input, m_socket);
 
 		if (SendRes == TRNS_FAILED)
 		{
