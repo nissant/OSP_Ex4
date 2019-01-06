@@ -36,6 +36,7 @@ static DWORD RecvDataThread(void)
 		}
 		else
 		{
+			// need to add printing to log file - "Recieved from server: <raw message>
 			cmd_to_action(server_to_client);
 		}
 		
@@ -63,6 +64,7 @@ static DWORD SendDataThread(void)
 				return 0x555; //"quit" signals an exit from the client side
 			}
 
+			
 			SendRes = SendString(cmd_to_server, m_socket);
 			cmd_ready = 0;
 
@@ -72,6 +74,9 @@ static DWORD SendDataThread(void)
 				game_ended = 1;
 				return 0x555;
 			}
+			else {
+				// need to add printing to log file "Sent to Server: <raw message>"
+			};
 		}
 		else		// new command is not ready yet
 			continue;
@@ -158,6 +163,7 @@ void MainClient(int argc, char *argv[])
 	// Check for general errors.
 	if ( connect( m_socket, (SOCKADDR*) &clientService, sizeof(clientService) ) == SOCKET_ERROR) {
         printf( "Failed to connect.\n" );
+		// add printing to log file
         WSACleanup();
         return;
     }

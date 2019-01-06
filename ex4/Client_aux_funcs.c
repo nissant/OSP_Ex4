@@ -74,7 +74,7 @@ void cmd_to_action(char *str)
 		break;
 
 	case BOARD_VIEW:
-		board[*params][*(params + 1)] = *(params + 3);
+		board[*params][*(params + 1)] = *(params + 2);
 		PrintBoard(board, GetStdHandle(STD_OUTPUT_HANDLE));
 		break;
 
@@ -86,14 +86,21 @@ void cmd_to_action(char *str)
 		printf("Well played\n");
 		break;
 
+	case PLAY_DECLINED:
+		printf("Error: %s\n", params);
+		break;
+
 	case GAME_ENDED:
 		if (strcmp("0",params)==0)
 			printf("Game ended. Everybody wins!\n");
 		else
 			printf("Game ended. The winner is %s!", params);
 		break;
+	case BAD_MSG
+
 
 	default:
-		// code to be executed if n doesn't match any constant
+		return;
+		
 	}
 }
