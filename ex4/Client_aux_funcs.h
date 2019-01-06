@@ -10,5 +10,5 @@
 
 
 // Function Declarations -------------------------------------------------------
-
+char* find_first_space(char *str);
 #endif // SOCKET_EXAMPLE_CLIENT_H

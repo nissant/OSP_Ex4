@@ -10,4 +10,35 @@ Description		-
 #include "Client_aux_funcs.h"
 //#include "SocketSendRecvTools.h"
 
-// Function Definitions --------------------------------------------------------
+void input_to_cmd(char *input, char *cmd)
+{
+	char *tmp_input;
+	char *space_pos;
+	strcpy(tmp_input, input);
+	if (*tmp_input == 'p') // if the input is a play command
+	{
+		space_pos = find_first_space(tmp_input); // find the space pos 
+		*space_pos = '\0';
+		strcpy(cmd, PLAY_REQUEST);
+		strcat(cmd, ":");			//put : inside the cmd
+		strcat(cmd, (space_pos + 1)); //put the number of column inside the cmd
+
+	}
+	else if (*tmp_input == 'm') //if the input is a message
+	{
+		// used functions that creates a command and put in in cm
+	}
+	else if (*tmp_input == 'e') //if the input is exit
+	{
+
+	}
+}
+
+char* find_first_space(char *str)
+{
+	char *position_of_space;
+	position_of_space = str;
+	while (position_of_space != ' ')
+		position_of_space++;
+	return position_of_space;
+}

@@ -9,9 +9,10 @@ Description		-
 #include <string.h>
 #include <winsock2.h>
 #ifndef SOCKET_EXAMPLE_CLIENT_H
-	#define SOCKET_EXAMPLE_CLIENT_H	
+#define SOCKET_EXAMPLE_CLIENT_H	
 	// Defines ---------------------------------------------------------------------
 	#define _WINSOCK_DEPRECATED_NO_WARNINGS
+	#define PLAY_REQUEST "PLAY_REQUEST" 
 	// Global Variables ------------------------------------------------------------
 
 	SOCKET m_socket;
