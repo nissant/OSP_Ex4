@@ -11,5 +11,9 @@ Description		-
 
 int main(int argc, char *argv[])
 {
-
+	// check that we have all cmd line arguments passed - cfg.txt memin.txt memout.txt regout.txt traceinst.txt traceunit.txt
+	if (argc != 7) {
+		printf("ERROR: Wrong command line usage (cfg.txt memin.txt memout.txt regout.txt traceinst.txt traceunit.txt) \n");
+		exit(1);
+	}
 }
