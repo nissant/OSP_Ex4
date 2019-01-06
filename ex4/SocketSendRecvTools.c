@@ -8,8 +8,6 @@ Description		-
 
 #include "SocketSendRecvTools.h"
 
-#include <stdio.h>
-#include <string.h>
 
 // Function Definitions --------------------------------------------------------
 

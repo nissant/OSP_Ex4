@@ -6,6 +6,9 @@ Description		-
 
 // Includes --------------------------------------------------------------------
 #include <winsock2.h>
+#include <stdio.h>
+#include <string.h>
+
 #ifndef SOCKET_SEND_RECV_TOOLS_H
 #define SOCKET_SEND_RECV_TOOLS_H
 

@@ -6,34 +6,9 @@ Description		-
 
 // Includes --------------------------------------------------------------------
 
-#define _CRT_SECURE_NO_WARNINGS
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-
-#include <stdio.h>
-#include <string.h>
-#include <winsock2.h>
-
-#include "SocketExampleShared.h"
+#include "Server_Module.h"
 #include "SocketSendRecvTools.h"
 
-// Defines ---------------------------------------------------------------------
-
-#define NUM_OF_WORKER_THREADS 2
-
-#define MAX_LOOPS 3
-
-#define SEND_STR_SIZE 35
-
-// Global Variables ------------------------------------------------------------
-
-HANDLE ThreadHandles[NUM_OF_WORKER_THREADS];
-SOCKET ThreadInputs[NUM_OF_WORKER_THREADS];
-
-/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
-
-static int FindFirstUnusedThreadSlot();
-static void CleanupWorkerThreads();
-static DWORD ServiceThread( SOCKET *t_socket );
 
 // Function Definitions --------------------------------------------------------
 
