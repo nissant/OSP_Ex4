@@ -9,7 +9,6 @@ Description		-
 #include "Client_Module.h"
 #include "SocketSendRecvTools.h"
 
-int stop = 0;
 
 
 
@@ -52,20 +51,28 @@ static DWORD SendDataThread(void)
 	char SendStr[256];
 	TransferResult_t SendRes;
 
-	while (1) 
+	while (!game_ended)
 	{
-		gets_s(SendStr, sizeof(SendStr)); //Reading a string from the keyboard
-
-		if ( STRINGS_ARE_EQUAL(SendStr,"quit") ) 
-			return 0x555; //"quit" signals an exit from the client side
-		
-		SendRes = SendString( SendStr, m_socket);
-	
-		if ( SendRes == TRNS_FAILED ) 
+		if (cmd_ready)
 		{
-			printf("Socket error while trying to write data to socket\n");
-			return 0x555;
+			if (STRINGS_ARE_EQUAL(cmd_to_server, "quit")) 
+			{
+				game_ended = 1;
+				return 0x555; //"quit" signals an exit from the client side
+			}
+
+			SendRes = SendString(cmd_to_server, m_socket);
+			cmd_ready = 0;
+
+			if (SendRes == TRNS_FAILED)
+			{
+				printf("Socket error while trying to write data to socket\n");
+				game_ended = 1;
+				return 0x555;
+			}
 		}
+		else		// new command is not ready yet
+			continue;
 	}
 }
 
@@ -76,15 +83,18 @@ static DWORD SendDataThread(void)
 //Sending data to the server
 static DWORD player_input(void)
 {
-	char input			[MAX_MSG_SIZE];
-	char cmd_to_server	[MAX_MSG_SIZE];
-
+	char input		[MAX_MSG_SIZE];
+	char user_name	[MAX_MSG_SIZE];
 	TransferResult_t SendRes;
 
-	while (!stop)
+	printf("Enter User Name\n");
+
+	while (!game_ended)
 	{
-	
+		gets_s(input, sizeof(input)); //Reading a string from the keyboard
+
 		input_to_cmd(input,cmd_to_server);
+		cmd_ready = 1;			// update the sending thread that there is a new message ready
 
 		if (STRINGS_ARE_EQUAL(input, "exit"))
 			return 0x555; //"quit" signals an exit from the client side
