@@ -12,7 +12,7 @@ Description		-
 
 // Function Definitions --------------------------------------------------------
 
-void MainServer()
+void MainServer(char *argv[])
 {
 	int Ind;
 	int Loop;

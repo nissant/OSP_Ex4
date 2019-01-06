@@ -11,16 +11,17 @@ Description		-
 
 int main(int argc, char *argv[])
 {
-	// check that we have all cmd line arguments passed - ex4.exe client/server <logfile> <server port> <input_mode> <input file>
-	if (argc != 6) {
-		printf("ERROR: Wrong command line usage (ex4.exe client <logfile> <server port> <input_mode> <input file>) \n");
+	// Server cmd line arguments: ex4.exe server <logfile> <server port>
+	// Client cmd line arguments: ex4.exe client <logfile> <server port> <input_mode> <input file>
+	if (argc < 4 || argc > 6) {
+		printf("ERROR: Wrong command line usage: \n	Server mode: ex4.exe server <logfile> <server port> \n	Client mode: ex4.exe client <logfile> <server port> <input_mode> <input file> \n");
 		exit(1);
 	}
 	if (strcmp(argv[1], "server") == 0){
-		MainServer();
+		MainServer(argv);
 	}
 	else if (strcmp(argv[1], "client") == 0) {
-		MainClient();
+		MainClient(argv);
 	}
 
 }

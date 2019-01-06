@@ -78,7 +78,7 @@ static DWORD SendDataThread(void)
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
-void MainClient()
+void MainClient(char *argv[])
 {
 	SOCKADDR_IN clientService;
 	HANDLE hThread[2];

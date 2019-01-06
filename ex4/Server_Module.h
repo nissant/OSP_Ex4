@@ -27,7 +27,7 @@ Description		-
 	SOCKET ThreadInputs[NUM_OF_WORKER_THREADS];
 
 	// Function Declarations -------------------------------------------------------
-	void MainServer();
+	void MainServer(char *argv[]);
 	static int FindFirstUnusedThreadSlot();
 	static void CleanupWorkerThreads();
 	static DWORD ServiceThread(SOCKET *t_socket);

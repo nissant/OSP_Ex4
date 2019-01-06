@@ -13,7 +13,7 @@ Description		-
 	// Function Declarations -------------------------------------------------------
 
 
-	void MainClient();
+	void MainClient(char *argv[]);
 
 
 
