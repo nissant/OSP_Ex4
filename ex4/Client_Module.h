@@ -16,5 +16,5 @@ Description		-
 
 	SOCKET m_socket;
 	// Function Declarations -------------------------------------------------------
-	void MainClient(char *argv[]);
+	void MainClient(int argc, char *argv[]);
 #endif // SOCKET_EXAMPLE_CLIENT_H

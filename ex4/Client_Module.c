@@ -72,7 +72,7 @@ static DWORD SendDataThread(void)
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
 //Sending data to the server
-static DWORD User_input(void)
+static DWORD player_input(void)
 {
 	char SendStr[256];
 	TransferResult_t SendRes;
@@ -180,7 +180,7 @@ void MainClient(int argc, char *argv[])
 	hThread[2] = CreateThread(
 		NULL,
 		0,
-		(LPTHREAD_START_ROUTINE)User_input,
+		(LPTHREAD_START_ROUTINE)player_input,
 		NULL,
 		0,
 		NULL
