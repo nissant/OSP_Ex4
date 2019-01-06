@@ -98,7 +98,7 @@ void MainServer(char *argv[])
 
     printf( "Waiting for a client to connect...\n" );
     
-	for ( Loop = 0; Loop < MAX_LOOPS; Loop++ )
+	for ( Loop = 0; Loop < MAX_LOOPS; Loop++ ) // Change to while on some endGame flag..
 	{
 		SOCKET AcceptSocket = accept( MainSocket, NULL, NULL );
 		if ( AcceptSocket == INVALID_SOCKET )
@@ -174,7 +174,6 @@ static int FindFirstUnusedThreadSlot()
 }
 
 
-
 static void CleanupWorkerThreads()
 {
 	int Ind; 
@@ -201,7 +200,6 @@ static void CleanupWorkerThreads()
 		}
 	}
 }
-
 
 
 //Service thread is the thread that opens for each successful client connection and "talks" to the client.
