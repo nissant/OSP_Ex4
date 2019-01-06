@@ -17,7 +17,7 @@ void input_to_cmd(char *input, char *cmd)
 	strcpy(tmp_input, input);
 	if (connected == 0)			//used only after connection to send the user name
 	{
-		strcpy(cmd, NEW_USER_REQUEST);
+		strcpy(cmd, NEW_USER_REQUEST_STR);
 		strcat(cmd, ":");
 		strcat(cmd, tmp_input);
 		connected = 1;			// to not enter the "if" again. only 1st time.
@@ -27,7 +27,7 @@ void input_to_cmd(char *input, char *cmd)
 	{
 		space_pos = find_first_space(tmp_input); // find the space pos 
 		*space_pos = '\0'; 
-		strcpy(cmd, PLAY_REQUEST);
+		strcpy(cmd, PLAY_REQUEST_STR);
 		strcat(cmd, ":");			//put : inside the cmd
 		strcat(cmd, (space_pos + 1)); //put the number of column inside the cmd
 		return;
@@ -45,4 +45,55 @@ char* find_first_space(char *str)
 	while (position_of_space != ' ')
 		position_of_space++;
 	return position_of_space;
+}
+
+void cmd_to_action(char *str)
+{
+	int msg_type = 0;
+	char params[MAX_MSG_SIZE];
+	msg_type = parseMessage(str, params);
+	switch (msg_type)
+	{
+
+	case NEW_USER_ACCEPTED:
+		printf("You are player number %s\n", params);
+		break;
+
+	case NEW_USER_DECLINED:
+		printf("Request to join was refused\n");
+		game_ended = 1;
+		break;
+
+	case GAME_STARTED:
+		printf("Game is on!\n");
+		break;
+
+	case TURN_SWITCH:
+		printf("%s's turn\n", params);
+		// need to also write to log file
+		break;
+
+	case BOARD_VIEW:
+		board[*params][*(params + 1)] = *(params + 3);
+		PrintBoard(board, GetStdHandle(STD_OUTPUT_HANDLE));
+		break;
+
+	case RECEIVE_MESSAGE:
+		printf("%s\n", params);
+		break;
+
+	case PLAY_ACCEPTED:
+		printf("Well played\n");
+		break;
+
+	case GAME_ENDED:
+		if (strcmp("0",params)==0)
+			printf("Game ended. Everybody wins!\n");
+		else
+			printf("Game ended. The winner is %s!", params);
+		break;
+
+	default:
+		// code to be executed if n doesn't match any constant
+	}
 }

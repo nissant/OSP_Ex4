@@ -13,8 +13,8 @@ Description		-
 	// Defines ---------------------------------------------------------------------
 	#define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-	#define PLAY_REQUEST		"PLAY_REQUEST"
-	#define NEW_USER_REQUEST	"NEW_USER_REQUEST"
+	#define PLAY_REQUEST_STR		"PLAY_REQUEST"
+	#define NEW_USER_REQUEST_STR	"NEW_USER_REQUEST"
 
 	// Global Variables ------------------------------------------------------------
 	int game_ended = 0;
@@ -22,6 +22,7 @@ Description		-
 	int connected = 0;		// global flag to know if already connected to server
 	char cmd_to_server		[MAX_MSG_SIZE];
 	char server_to_client	[MAX_MSG_SIZE];
+	int board[6][7] = { 0 };
 
 
 
@@ -29,4 +30,5 @@ Description		-
 	SOCKET m_socket;
 	// Function Declarations -------------------------------------------------------
 	void MainClient(int argc, char *argv[]);
+	void cmd_to_action(char *str);
 #endif // SOCKET_EXAMPLE_CLIENT_H

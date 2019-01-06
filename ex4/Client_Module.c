@@ -19,8 +19,8 @@ static DWORD RecvDataThread(void)
 
 	while (!game_ended)
 	{
-		char *AcceptedStr = NULL;
-		RecvRes = ReceiveString( &AcceptedStr , m_socket );
+		
+		RecvRes = ReceiveString( &server_to_client, m_socket );
 
 		if ( RecvRes == TRNS_FAILED )
 		{
@@ -36,7 +36,7 @@ static DWORD RecvDataThread(void)
 		}
 		else
 		{
-			printf("%s\n",AcceptedStr);
+			cmd_to_action(server_to_client);
 		}
 		
 
