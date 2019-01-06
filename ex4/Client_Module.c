@@ -12,7 +12,7 @@ Description		-
 #include <string.h>
 #include <winsock2.h>
 
-#include "SocketExampleShared.h"
+#include 
 #include "SocketSendRecvTools.h"
 
 
