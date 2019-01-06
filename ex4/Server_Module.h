@@ -36,7 +36,6 @@ Description		-
 	#define SEND_MESSAGE 11
 	#define RECEIVE_MESSAGE 12
 
-
 	// Global Variables ------------------------------------------------------------
 
 	HANDLE ThreadHandles[NUM_OF_WORKER_THREADS];
