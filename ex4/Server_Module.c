@@ -105,7 +105,8 @@ void MainServer(char *argv[])
 
     printf( "Waiting for a client to connect...\n" );
     
-	for ( Loop = 0; Loop < MAX_LOOPS; Loop++ ) // Change to while on some endGame flag..
+
+	while (1) // Change to while on some endGame flag..
 	{
 		SOCKET AcceptSocket = accept( MainSocket, NULL, NULL );
 		if ( AcceptSocket == INVALID_SOCKET )
@@ -138,7 +139,7 @@ void MainServer(char *argv[])
 				NULL
 			);
 		}
-    } // for ( Loop = 0; Loop < MAX_LOOPS; Loop++ )
+    } 
 
 server_cleanup_3:
 
@@ -155,7 +156,7 @@ server_cleanup_1:
 	fclose(fp_server_log);
 
 file_stream_fail:
-
+	return;
 }
 
 
