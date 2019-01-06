@@ -35,6 +35,7 @@ Description		-
 	#define GAME_ENDED 10
 	#define SEND_MESSAGE 11
 	#define RECEIVE_MESSAGE 12
+	#define BAD_MSG			99
 
 	// Global Variables ------------------------------------------------------------
 
