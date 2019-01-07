@@ -262,7 +262,6 @@ int parseMessage(char *in_str, char *out_str) {
 	if (msg_ptr != NULL) {
 		*msg_ptr = '\0';
 		msg_ptr++;
-		msg_ptr = replace_char(msg_ptr, ';', ' ');
 		msg_ptr = trimwhitespace(msg_ptr);
 	}
 	
