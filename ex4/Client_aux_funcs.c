@@ -8,7 +8,7 @@ Description		-
 #include "Server_Module.h"
 #include "Client_Module.h"
 #include "Client_aux_funcs.h"
-//#include "SocketSendRecvTools.h"
+#include "SocketSendRecvTools.h"
 
 int input_to_cmd(char *input, char *cmd)
 {
@@ -73,7 +73,11 @@ int input_to_cmd(char *input, char *cmd)
 	}
 	else if (*tmp_input == 'm') //if the input is a message
 	{
-		// used functions that creates a command and put in in cm
+		insertSemicolon(str_ptr);
+		strcpy(cmd, SEND_MESSAGE_STR);
+		strcat(cmd, ":");			//put : inside the cmd
+		strcat(cmd, str_ptr); //put the number of column inside the cmd
+		return 0;
 	}
 }
 
@@ -91,6 +95,7 @@ char* find_first_space(char *str)
 void cmd_to_action(char *str)
 {
 	int msg_type = 0;
+	char *pos = NULL;
 	char params[MAX_MSG_SIZE];
 	msg_type = parseMessage(str, params);
 	switch (msg_type)
@@ -111,7 +116,7 @@ void cmd_to_action(char *str)
 
 	case TURN_SWITCH:
 		printf("%s's turn\n", params);
-		// need to also write to log file
+		fputs("%s's turn\n", params, client_log);
 		break;
 
 	case BOARD_VIEW:
@@ -120,6 +125,8 @@ void cmd_to_action(char *str)
 		break;
 
 	case RECEIVE_MESSAGE:
+		pos = strchr(params, ' ');
+		*pos = ':';
 		printf("%s\n", params);
 		break;
 
@@ -137,12 +144,10 @@ void cmd_to_action(char *str)
 		else
 			printf("Game ended. The winner is %s!", params);
 		break;
-	case BAD_MSG
+	case BAD_MSG:
+		printf("Bad Communication message. exiting");
+		fputs("Bad Communication message.exiting", client_log);
 
-
-	default:
-		return;
-		
 	}
 }
 

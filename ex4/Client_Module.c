@@ -32,18 +32,20 @@ static DWORD RecvDataThread(void)
 		if ( RecvRes == TRNS_FAILED )
 		{
 			printf("Socket error while trying to write data to socket\n");
+			fputs("Socket error while trying to write data to socket\n", client_log);
 			game_ended = 1;
-			return 0x555;
+			exit(007);
 		}
 		else if ( RecvRes == TRNS_DISCONNECTED )
 		{
-			printf("Server closed connection. Bye!\n");
+			printf("Server disconnected. Exiting\n");
+			fputs("Server disconnected. Exiting\n", client_log);
 			game_ended = 1;
 			return 0x555;
 		}
 		else
 		{
-			// need to add printing to log file - "Recieved from server: <raw message>
+			fputs(server_to_client, client_log);
 			cmd_to_action(server_to_client);
 		}
 		
@@ -85,7 +87,7 @@ static DWORD SendDataThread(void)
 			{
 				printf("Socket error while trying to write data to socket\n");
 				game_ended = 1;
-				return 0x555;
+				exit(007);
 			}
 			else {
 				// need to add printing to log file "Sent to Server: <raw message>"
