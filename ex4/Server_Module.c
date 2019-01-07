@@ -291,3 +291,190 @@ static DWORD ServiceThread( SOCKET *t_socket )
 	closesocket( *t_socket );
 	return 0;
 }
+
+
+
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns		–
+*/
+int parseMessage(char *in_str, char *out_str) {
+	int msg_type;
+	char *msg_ptr;
+
+	if (in_str == NULL || out_str == NULL) {
+		return -1;
+	}
+
+	msg_ptr = strchr(in_str, ':');
+	if (msg_ptr != NULL) {
+		*msg_ptr = '\0';
+		msg_ptr++;
+		msg_ptr = removeCharacter(msg_ptr, ';');
+		msg_ptr = trimwhitespace(msg_ptr);
+	}
+
+	strcpy(out_str, msg_ptr);
+	in_str = trimwhitespace(in_str);
+
+	// Look for message type string
+	if (strstr(in_str, "NEW_USER_REQUEST") != NULL) {
+		msg_type = NEW_USER_REQUEST;
+	}
+	else if (strstr(in_str, "NEW_USER_ACCEPTED") != NULL) {
+		msg_type = NEW_USER_ACCEPTED;
+	}
+	else if (strstr(in_str, "NEW_USER_DECLINED") != NULL) {
+		msg_type = NEW_USER_DECLINED;
+	}
+	else if (strstr(in_str, "GAME_STARTED") != NULL) {
+		msg_type = GAME_STARTED;
+	}
+	else if (strstr(in_str, "BOARD_VIEW") != NULL) {
+		msg_type = BOARD_VIEW;
+	}
+	else if (strstr(in_str, "TURN_SWITCH") != NULL) {
+		msg_type = TURN_SWITCH;
+	}
+	else if (strstr(in_str, "PLAY_REQUEST") != NULL) {
+		msg_type = PLAY_REQUEST;
+	}
+	else if (strstr(in_str, "PLAY_ACCEPTED") != NULL) {
+		msg_type = PLAY_ACCEPTED;
+	}
+	else if (strstr(in_str, "PLAY_DECLINED") != NULL) {
+		msg_type = PLAY_DECLINED;
+	}
+	else if (strstr(in_str, "GAME_ENDED") != NULL) {
+		msg_type = GAME_ENDED;
+	}
+	else if (strstr(in_str, "SEND_MESSAGE") != NULL) {
+		msg_type = SEND_MESSAGE;
+	}
+	else if (strstr(in_str, "RECEIVE_MESSAGE") != NULL) {
+		msg_type = RECEIVE_MESSAGE;
+	}
+	else
+		msg_type = BAD_MSG;
+
+	return msg_type;
+}
+
+
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns
+*/
+char* removeCharacter(char* str, char find) {
+	char temp[MAX_MSG_SIZE];
+	char *ptr, *ptr2;
+
+	if (str == NULL) {
+		return NULL;
+	}
+
+	ptr = str;
+	ptr2 = temp;
+	while (*ptr != '\0') {
+		if (*ptr != find) {
+			*ptr2 = *ptr;
+			ptr2++;
+		}
+		ptr++;
+	}
+	*ptr2 = '\0';
+	strcpy(str, temp);
+	return str;
+}
+
+
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns
+*/
+char* replace_char(char* str, char find, char replace) {
+	char *current_pos = strchr(str, find);
+	while (current_pos) {
+		*current_pos = replace;
+		current_pos = strchr(current_pos, find);
+	}
+	return str;
+}
+
+
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns
+*/
+char* insertSemicolon(char* str) {
+	char temp[MAX_MSG_SIZE];
+	char *ptr, *ptr2;
+
+	if (str == NULL) {
+		return NULL;
+	}
+
+	ptr = str;
+	ptr2 = temp;
+	while (*ptr != '\0') {
+		if (*ptr == ' ') {
+			*ptr2 = ';';
+			ptr2++;
+			*ptr2 = ' ';
+			ptr2++;
+			*ptr2 = ';';
+			ptr2++;
+		}
+		else {
+			*ptr2 = *ptr;
+			ptr2++;
+		}
+
+		ptr++;
+	}
+	*ptr2 = '\0';
+	strcpy(str, temp);
+	return str;
+}
+
+
+/*
+Function: trimwhitespace
+------------------------
+Description – The function receive pointer to a string and trimms the string from white spaces
+Parameters	– *str is a pointer to a string to be trimmed.
+Returns		– Retrun pointer to trimmed string
+*/
+char *trimwhitespace(char *str)
+{
+	char *end;
+
+	// Trim leading space
+	while (isspace((unsigned char)*str)) str++;
+
+	if (*str == 0)  // All spaces?
+		return str;
+
+	// Trim trailing space
+	end = str + strlen(str) - 1;
+	while (end > str && isspace((unsigned char)*end)) end--;
+
+	// Write new null terminator character
+	end[1] = '\0';
+
+	return str;
+}
+
+

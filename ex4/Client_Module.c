@@ -13,6 +13,13 @@ Description		-
 
 
 //Reading data coming from the server
+/*
+Function 
+------------------------
+Description – 
+Parameters	– 
+Returns		– 
+*/
 static DWORD RecvDataThread(void)
 {
 	TransferResult_t RecvRes;
@@ -46,9 +53,15 @@ static DWORD RecvDataThread(void)
 	return 0;
 }
 
-/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
 //Sending data to the server
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns		–
+*/
 static DWORD SendDataThread(void)
 {
 
@@ -83,11 +96,15 @@ static DWORD SendDataThread(void)
 	}
 }
 
-/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
-
-/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
 //Sending data to the server
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns		–
+*/
 static DWORD player_input(void)
 {
 	char input		[MAX_MSG_SIZE];
@@ -112,8 +129,13 @@ static DWORD player_input(void)
 	}
 }
 
-/*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
-
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns		–
+*/
 void MainClient(int argc, char *argv[])
 {
 	DWORD wait_res;
@@ -259,4 +281,3 @@ void MainClient(int argc, char *argv[])
     
 	return;
 }
-
