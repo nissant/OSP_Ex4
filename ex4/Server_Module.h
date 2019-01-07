@@ -49,6 +49,7 @@ Description		-
 	static void CleanupWorkerThreads();
 	static DWORD ServiceThread(SOCKET *t_socket);
 	int parseMessage(char *in_str, char *out_str);
-
+	char* replace_char(char* str, char find, char replace);
+	char *trimwhitespace(char *str);
 
 #endif // SOCKET_EXAMPLE_SERVER_H
