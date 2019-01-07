@@ -12,9 +12,11 @@ Description		-
 #define SOCKET_EXAMPLE_CLIENT_H	
 	// Defines ---------------------------------------------------------------------
 	#define _WINSOCK_DEPRECATED_NO_WARNINGS
+	#define EXIT_ERROR -1 
 
 	#define PLAY_REQUEST_STR		"PLAY_REQUEST"
 	#define NEW_USER_REQUEST_STR	"NEW_USER_REQUEST"
+	#define SEND_MESSAGE_STR		"SEND_MESSAGE"
 
 	// Global Variables ------------------------------------------------------------
 	int game_ended = 0;
@@ -23,12 +25,13 @@ Description		-
 	char cmd_to_server		[MAX_MSG_SIZE];
 	char server_to_client	[MAX_MSG_SIZE];
 	int board[6][7] = { 0 };
+	FILE *client_log = NULL;
 
-
+	
 
 
 	SOCKET m_socket;
 	// Function Declarations -------------------------------------------------------
 	void MainClient(int argc, char *argv[]);
-	void cmd_to_action(char *str);
+
 #endif // SOCKET_EXAMPLE_CLIENT_H

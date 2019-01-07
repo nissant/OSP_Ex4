@@ -104,7 +104,10 @@ static DWORD player_input(void)
 			return 0x555; //"quit" signals an exit from the client side
 		}
 
-		input_to_cmd(input, cmd_to_server);
+		if (input_to_cmd(input, cmd_to_server)) // if entered, the command is wrong. try again
+		{
+			continue;		//try again
+		}
 		cmd_ready = 1;			// update the sending thread that there is a new message ready
 	}
 }
@@ -113,18 +116,28 @@ static DWORD player_input(void)
 
 void MainClient(int argc, char *argv[])
 {
+	DWORD wait_res;
 	SOCKADDR_IN clientService;
 	HANDLE hThread[3];
 
     // Initialize Winsock.
     WSADATA wsaData; //Create a WSADATA object called wsaData.
 	//The WSADATA structure contains information about the Windows Sockets implementation.
+
+	client_log = fopen(argv[2], "w");
+	if (client_log == NULL)
+	{
+		printf("Failed to open log file for writing\n");
+		return (EXIT_ERROR);
+	}
 	
 	//Call WSAStartup and check for errors.
     int iResult = WSAStartup( MAKEWORD(2, 2), &wsaData );
-    if ( iResult != NO_ERROR )
-        printf("Error at WSAStartup()\n");
-
+	if (iResult != NO_ERROR) {
+		printf("Error at WSAStartup()\n");
+		fputs("Error at WSAStartup()\n", client_log);
+		return EXIT_ERROR;
+	}
 	//Call the socket function and return its value to the m_socket variable. 
 	// For this application, use the Internet address family, streaming sockets, and the TCP/IP protocol.
 	
@@ -134,8 +147,9 @@ void MainClient(int argc, char *argv[])
 	// Check for errors to ensure that the socket is a valid socket.
     if ( m_socket == INVALID_SOCKET ) {
         printf( "Error at socket(): %ld\n", WSAGetLastError() );
-        WSACleanup();
-        return;
+		fputs("Error at socket(): %ld\n", WSAGetLastError(), client_log);
+		WSACleanup();
+		return EXIT_ERROR;
     }
 	/*
 	 The parameters passed to the socket function can be changed for different implementations. 
@@ -152,7 +166,7 @@ void MainClient(int argc, char *argv[])
     //Create a sockaddr_in object clientService and set  values.
     clientService.sin_family = AF_INET;
 	clientService.sin_addr.s_addr = inet_addr( SERVER_ADDRESS_STR ); //Setting the IP address to connect to
-    //clientService.sin_port = htons( SERVER_PORT ); //Setting the port to connect to.
+    clientService.sin_port = htons( argv[3]); //Setting the port to connect to.
 	
 	/*
 		AF_INET is the Internet address family. 
@@ -163,9 +177,9 @@ void MainClient(int argc, char *argv[])
 	// Check for general errors.
 	if ( connect( m_socket, (SOCKADDR*) &clientService, sizeof(clientService) ) == SOCKET_ERROR) {
         printf( "Failed to connect.\n" );
-		// add printing to log file
+		fputs("Failed to connect.\n", client_log);
         WSACleanup();
-        return;
+		return EXIT_ERROR;
     }
 
     // Send and receive data.
@@ -185,6 +199,12 @@ void MainClient(int argc, char *argv[])
 		0,
 		NULL
 	);
+	if (hThread[0] == NULL)
+	{
+		printf("couldn't create SendDataThread.\n");
+		fputs("couldn't create SendDataThread.\n", client_log);
+		return EXIT_ERROR;
+	}
 	hThread[1]=CreateThread(
 		NULL,
 		0,
@@ -193,6 +213,12 @@ void MainClient(int argc, char *argv[])
 		0,
 		NULL
 	);
+	if (hThread[1] == NULL)
+	{
+		printf("couldn't create RecvDataThread.\n");
+		fputs("couldn't create RecvDataThread.\n", client_log);
+		return EXIT_ERROR;
+	}
 	hThread[2] = CreateThread(
 		NULL,
 		0,
@@ -201,9 +227,22 @@ void MainClient(int argc, char *argv[])
 		0,
 		NULL
 	);
+	if (hThread[2] == NULL)
+	{
+		printf("couldn't create player_input.\n");
+		fputs("couldn't create player_input.\n", client_log);
+		return EXIT_ERROR;
+	}
 
 
-	WaitForMultipleObjects(3,hThread,FALSE,INFINITE);
+	//WaitForMultipleObjects(3,hThread,FALSE,INFINITE);
+
+	wait_res = WaitForMultipleObjects(3, hThread, FALSE, INFINITE);
+	if (wait_res != WAIT_OBJECT_0) {
+		printf("Error when waiting for Client's threads!\n");
+		fputs("Error when waiting for Client's threads!\n", client_log);
+		return EXIT_ERROR;
+	}
 
 	TerminateThread(hThread[0],0x555);
 	TerminateThread(hThread[1],0x555);
@@ -214,6 +253,7 @@ void MainClient(int argc, char *argv[])
 	CloseHandle(hThread[2]);
 
 	closesocket(m_socket);
+	fclose(client_log);
 	
 	WSACleanup();
     

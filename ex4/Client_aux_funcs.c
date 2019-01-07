@@ -10,27 +10,66 @@ Description		-
 #include "Client_aux_funcs.h"
 //#include "SocketSendRecvTools.h"
 
-void input_to_cmd(char *input, char *cmd)
+int input_to_cmd(char *input, char *cmd)
 {
-	char *tmp_input;
-	char *space_pos;
+	char *tmp_input [MAX_MSG_SIZE];
+	char *space_pos=NULL;
+	char *str_ptr=NULL;
 	strcpy(tmp_input, input);
+
 	if (connected == 0)			//used only after connection to send the user name
 	{
 		strcpy(cmd, NEW_USER_REQUEST_STR);
 		strcat(cmd, ":");
 		strcat(cmd, tmp_input);
 		connected = 1;			// to not enter the "if" again. only 1st time.
-		return;
+		return 0;
 	}
+
+	// check if wrong command--------------------------
+	if (*tmp_input != 'p' || *tmp_input != 'm')
+	{
+		printf("Error: iilegal command\n");
+		fputs("Error: iilegal command\n", client_log);
+		return 1; // try again
+	}
+	space_pos = strchr(tmp_input, ' '); // find space
+	if (space_pos == NULL)
+	{
+		printf("Error: iilegal command\n");
+		fputs("Error: iilegal command\n", client_log);
+		return 1; // try again
+	}
+
+	*space_pos = '\0';
+	if (strcmpr(tmp_input, "play") != 0 || strcmpr(tmp_input, "message") != 0)
+	{
+		printf("Error: iilegal command\n");
+		fputs("Error: iilegal command\n", client_log);
+		return 1; // try again
+	}
+	str_ptr = space_pos+1;
+	if (*str_ptr == '\0')
+	{
+		printf("Error: iilegal command\n");
+		fputs("Error: iilegal command\n", client_log);
+		return 1; // try again
+	}
+	//finished wrong command check --------------------------
+
+
 	if (*tmp_input == 'p') // if the input is a play command
 	{
-		space_pos = find_first_space(tmp_input); // find the space pos 
-		*space_pos = '\0'; 
+		if (!chk_if_all_digits(str_ptr))
+		{
+			printf("Error: iilegal command\n");
+			fputs("Error: iilegal command\n", client_log);
+			return 1; // try again
+		}
 		strcpy(cmd, PLAY_REQUEST_STR);
 		strcat(cmd, ":");			//put : inside the cmd
-		strcat(cmd, (space_pos + 1)); //put the number of column inside the cmd
-		return;
+		strcat(cmd, str_ptr); //put the number of column inside the cmd
+		return 0;
 	}
 	else if (*tmp_input == 'm') //if the input is a message
 	{
@@ -38,6 +77,7 @@ void input_to_cmd(char *input, char *cmd)
 	}
 }
 
+/*
 char* find_first_space(char *str)
 {
 	char *position_of_space;
@@ -46,6 +86,7 @@ char* find_first_space(char *str)
 		position_of_space++;
 	return position_of_space;
 }
+*/
 
 void cmd_to_action(char *str)
 {
@@ -103,4 +144,15 @@ void cmd_to_action(char *str)
 		return;
 		
 	}
+}
+
+int chk_if_all_digits(char *str)
+{
+	while (*str != '\0')
+	{
+		if (0 == isdigit(*str))
+			return 0; // not digit
+		str++;
+	}
+	return 1;
 }
