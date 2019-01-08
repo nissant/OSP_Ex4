@@ -16,7 +16,7 @@ Description		-
  game_started	=	0;
  my_turn		=	0;
  read_file		=	1;
- client_log		= NULL;
+ //client_log		= NULL;
 
 
 //Reading data coming from the server
@@ -144,7 +144,7 @@ static DWORD file_input(LPVOID lpParam)
 	input_file = fopen(input_file_path, "r");
 
 	// read the first line which is the user name
-	get_cmd_from_line(input, input_file);
+	get_cmd_from_file(input, input_file);
 	input_to_cmd(input, cmd_to_server);
 	cmd_ready = 1;
 	

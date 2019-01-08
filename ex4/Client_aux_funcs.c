@@ -171,7 +171,7 @@ int chk_if_all_digits(char *str)
 	return 1;
 }
 
-void intit_board(int board[][7])
+void init_board(int board[][7])
 {
 	for (int i = 0; i < 6; i++)
 	{
