@@ -52,7 +52,7 @@ static DWORD RecvDataThread(void)
 		}
 		else
 		{
-			fputs(server_to_client, client_log);
+			fputs("Received from server: %s\n", server_to_client, client_log);
 			cmd_to_action(server_to_client);
 		}
 		

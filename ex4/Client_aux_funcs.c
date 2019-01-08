@@ -98,6 +98,7 @@ void cmd_to_action(char *str)
 	int msg_type = 0;
 	char *pos = NULL;
 	char params[MAX_MSG_SIZE];
+
 	msg_type = parseMessage(str, params);
 	switch (msg_type)
 	{
