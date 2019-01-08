@@ -19,13 +19,13 @@ Description		-
 	#define SEND_MESSAGE_STR		"SEND_MESSAGE"
 
 	// Global Variables ------------------------------------------------------------
-	int game_ended = 0;
-	int cmd_ready = 0;
-	int connected = 0;		// global flag to know if already connected to server
+	int game_ended;
+	int cmd_ready;
+	int connected ;		// global flag to know if already connected to server
 	char cmd_to_server		[MAX_MSG_SIZE];
 	char server_to_client	[MAX_MSG_SIZE];
-	int board[6][7] = { 0 };
-	FILE *client_log = NULL;
+	int board[6][7];
+	FILE *client_log;
 
 	
 

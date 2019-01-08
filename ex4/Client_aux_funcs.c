@@ -12,7 +12,7 @@ Description		-
 
 int input_to_cmd(char *input, char *cmd)
 {
-	char *tmp_input [MAX_MSG_SIZE];
+	char tmp_input[MAX_MSG_SIZE];
 	char *space_pos=NULL;
 	char *str_ptr=NULL;
 	strcpy(tmp_input, input);
@@ -27,7 +27,7 @@ int input_to_cmd(char *input, char *cmd)
 	}
 
 	// check if wrong command--------------------------
-	if (*tmp_input != 'p' || *tmp_input != 'm')
+	if (*tmp_input != 'p' && *tmp_input != 'm')
 	{
 		printf("Error: iilegal command\n");
 		fputs("Error: iilegal command\n", client_log);
@@ -42,7 +42,7 @@ int input_to_cmd(char *input, char *cmd)
 	}
 
 	*space_pos = '\0';
-	if (strcmpr(tmp_input, "play") != 0 || strcmpr(tmp_input, "message") != 0)
+	if (strcmp(tmp_input, "play") != 0 && strcmp(tmp_input, "message") != 0)
 	{
 		printf("Error: iilegal command\n");
 		fputs("Error: iilegal command\n", client_log);

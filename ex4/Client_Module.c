@@ -22,6 +22,8 @@ Returns		–
 */
 static DWORD RecvDataThread(void)
 {
+	while (1);
+	/*
 	TransferResult_t RecvRes;
 
 	while (!game_ended)
@@ -31,8 +33,8 @@ static DWORD RecvDataThread(void)
 
 		if ( RecvRes == TRNS_FAILED )
 		{
-			printf("Socket error while trying to write data to socket\n");
-			fputs("Socket error while trying to write data to socket\n", client_log);
+			printf("Socket error while trying to read data from socket\n");
+			fputs("Socket error while trying to read data from socket\n", client_log);
 			game_ended = 1;
 			exit(007);
 		}
@@ -52,7 +54,7 @@ static DWORD RecvDataThread(void)
 
 	}
 
-	return 0;
+	return 0;*/
 }
 
 
@@ -109,12 +111,13 @@ Returns		–
 */
 static DWORD player_input(void)
 {
-	char input		[MAX_MSG_SIZE];
+	char input [MAX_MSG_SIZE];
 
 	printf("Enter User Name\n");
 
 	while (!game_ended)
 	{
+
 		gets_s(input, sizeof(input)); //Reading a string from the keyboard
 
 		if (STRINGS_ARE_EQUAL(input, "exit"))
@@ -143,6 +146,19 @@ void MainClient(int argc, char *argv[])
 	DWORD wait_res;
 	SOCKADDR_IN clientService;
 	HANDLE hThread[3];
+	// initialize globals -------------
+	game_ended = 0;
+	cmd_ready = 0;
+	connected = 0;
+	client_log = NULL;
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 7; j++)
+		{
+			board[i][j] = 0;
+		}
+	}
+	// finish initializing globals -------------
 
     // Initialize Winsock.
     WSADATA wsaData; //Create a WSADATA object called wsaData.
@@ -190,7 +206,7 @@ void MainClient(int argc, char *argv[])
     //Create a sockaddr_in object clientService and set  values.
     clientService.sin_family = AF_INET;
 	clientService.sin_addr.s_addr = inet_addr( SERVER_ADDRESS_STR ); //Setting the IP address to connect to
-    clientService.sin_port = htons( argv[3]); //Setting the port to connect to.
+    clientService.sin_port = htons(4444); //Setting the port to connect to.
 	
 	/*
 		AF_INET is the Internet address family. 
@@ -203,7 +219,7 @@ void MainClient(int argc, char *argv[])
         printf( "Failed to connect.\n" );
 		fputs("Failed to connect.\n", client_log);
         WSACleanup();
-		return EXIT_ERROR;
+		exit (EXIT_ERROR);
     }
 
     // Send and receive data.
@@ -229,6 +245,7 @@ void MainClient(int argc, char *argv[])
 		fputs("couldn't create SendDataThread.\n", client_log);
 		return EXIT_ERROR;
 	}
+	
 	hThread[1]=CreateThread(
 		NULL,
 		0,
@@ -243,6 +260,7 @@ void MainClient(int argc, char *argv[])
 		fputs("couldn't create RecvDataThread.\n", client_log);
 		return EXIT_ERROR;
 	}
+	
 	hThread[2] = CreateThread(
 		NULL,
 		0,
