@@ -10,6 +10,13 @@ Description		-
 #include "SocketSendRecvTools.h"
 
 
+ game_ended		=	0;
+ cmd_ready		=	0;
+ connected		=	0;		// global flag to know if already connected to server
+ game_started	=	0;
+ my_turn		=	0;
+ read_file		=	1;
+ client_log		= NULL;
 
 
 //Reading data coming from the server
@@ -22,8 +29,6 @@ Returns		–
 */
 static DWORD RecvDataThread(void)
 {
-	while (1);
-	/*
 	TransferResult_t RecvRes;
 
 	while (!game_ended)
@@ -54,7 +59,7 @@ static DWORD RecvDataThread(void)
 
 	}
 
-	return 0;*/
+	return 0;
 }
 
 
@@ -75,15 +80,8 @@ static DWORD SendDataThread(void)
 	{
 		if (cmd_ready)
 		{
-			if (STRINGS_ARE_EQUAL(cmd_to_server, "quit")) 
-			{
-				game_ended = 1;
-				return 0x555; //"quit" signals an exit from the client side
-			}
-
-			
+		
 			SendRes = SendString(cmd_to_server, m_socket);
-			cmd_ready = 0;
 
 			if (SendRes == TRNS_FAILED)
 			{
@@ -92,7 +90,9 @@ static DWORD SendDataThread(void)
 				exit(007);
 			}
 			else {
-				// need to add printing to log file "Sent to Server: <raw message>"
+
+				fputs("Sent to Server: %s\n",cmd_to_server, client_log);
+				cmd_ready = 0;
 			};
 		}
 		else		// new command is not ready yet
@@ -117,7 +117,8 @@ static DWORD player_input(void)
 
 	while (!game_ended)
 	{
-
+		if (cmd_ready)	// if cmd_ready == 1 the message has not been send yet so dont get new data from player.
+			continue;
 		gets_s(input, sizeof(input)); //Reading a string from the keyboard
 
 		if (STRINGS_ARE_EQUAL(input, "exit"))
@@ -134,6 +135,42 @@ static DWORD player_input(void)
 	}
 }
 
+
+static DWORD file_input(LPVOID lpParam)
+{
+	char input[MAX_MSG_SIZE];
+	char *input_file_path = (char*)lpParam;
+
+	input_file = fopen(input_file_path, "r");
+
+	// read the first line which is the user name
+	get_cmd_from_line(input, input_file);
+	input_to_cmd(input, cmd_to_server);
+	cmd_ready = 1;
+	
+	while (!game_ended && my_turn)
+	{
+		if (cmd_ready)	// if cmd_ready == 1 the message has not been sent yet so dont get new data from player.
+			continue;
+
+		get_cmd_from_file(input, input_file);
+
+		if (STRINGS_ARE_EQUAL(input, "exit"))
+		{
+			game_ended = 1;
+			return 0x555; //"quit" signals an exit from the client side
+		}
+
+		if (1==input_to_cmd(input, cmd_to_server)) // if entered, the command is wrong. try again
+		{
+			continue;		//try again
+		}
+		if (2 == input_to_cmd(input, cmd_to_server)) // if the command is play command return 2
+			my_turn = 0;
+		cmd_ready = 1;			// update the sending thread that there is a new message ready
+	}
+}
+
 /*
 Function
 ------------------------
@@ -146,19 +183,10 @@ void MainClient(int argc, char *argv[])
 	DWORD wait_res;
 	SOCKADDR_IN clientService;
 	HANDLE hThread[3];
-	// initialize globals -------------
-	game_ended = 0;
-	cmd_ready = 0;
-	connected = 0;
-	client_log = NULL;
-	for (int i = 0; i < 6; i++)
-	{
-		for (int j = 0; j < 7; j++)
-		{
-			board[i][j] = 0;
-		}
-	}
-	// finish initializing globals -------------
+	int port = atoi(argv[3]);
+
+	init_board(board);	//init board with zero.
+
 
     // Initialize Winsock.
     WSADATA wsaData; //Create a WSADATA object called wsaData.
@@ -206,7 +234,7 @@ void MainClient(int argc, char *argv[])
     //Create a sockaddr_in object clientService and set  values.
     clientService.sin_family = AF_INET;
 	clientService.sin_addr.s_addr = inet_addr( SERVER_ADDRESS_STR ); //Setting the IP address to connect to
-    clientService.sin_port = htons(4444); //Setting the port to connect to.
+    clientService.sin_port = htons(port); //Setting the port to connect to.
 	
 	/*
 		AF_INET is the Internet address family. 
@@ -261,21 +289,42 @@ void MainClient(int argc, char *argv[])
 		return EXIT_ERROR;
 	}
 	
-	hThread[2] = CreateThread(
-		NULL,
-		0,
-		(LPTHREAD_START_ROUTINE)player_input,
-		NULL,
-		0,
-		NULL
-	);
-	if (hThread[2] == NULL)
+	if (strcmp(argv[4], "file") == 0) // if file input
 	{
-		printf("couldn't create player_input.\n");
-		fputs("couldn't create player_input.\n", client_log);
-		return EXIT_ERROR;
+		hThread[2] = CreateThread(
+			NULL,
+			0,
+			(LPTHREAD_START_ROUTINE)file_input,
+			argv[5],
+			0,
+			NULL
+			);
+			if (hThread[2] == NULL)
+			{
+				printf("couldn't create file_input thread.\n");
+				fputs("couldn't create file_input thread.\n", client_log);
+				return EXIT_ERROR;
+			}
+		
 	}
+	else 
+	{
 
+		hThread[2] = CreateThread(
+			NULL,
+			0,
+			(LPTHREAD_START_ROUTINE)player_input,
+			NULL,
+			0,
+			NULL
+		);
+		if (hThread[2] == NULL)
+		{
+			printf("couldn't create player_input thread.\n");
+			fputs("couldn't create player_input thread.\n", client_log);
+			return EXIT_ERROR;
+		}
+	}
 
 	//WaitForMultipleObjects(3,hThread,FALSE,INFINITE);
 
@@ -296,6 +345,7 @@ void MainClient(int argc, char *argv[])
 
 	closesocket(m_socket);
 	fclose(client_log);
+
 	
 	WSACleanup();
     

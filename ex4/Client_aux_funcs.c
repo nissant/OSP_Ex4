@@ -22,6 +22,7 @@ int input_to_cmd(char *input, char *cmd)
 		strcpy(cmd, NEW_USER_REQUEST_STR);
 		strcat(cmd, ":");
 		strcat(cmd, tmp_input);
+		strcpy(my_name, input);		// to know my name to know if it is my turn.
 		connected = 1;			// to not enter the "if" again. only 1st time.
 		return 0;
 	}
@@ -69,7 +70,7 @@ int input_to_cmd(char *input, char *cmd)
 		strcpy(cmd, PLAY_REQUEST_STR);
 		strcat(cmd, ":");			//put : inside the cmd
 		strcat(cmd, str_ptr); //put the number of column inside the cmd
-		return 0;
+		return 2;
 	}
 	else if (*tmp_input == 'm') //if the input is a message
 	{
@@ -112,11 +113,16 @@ void cmd_to_action(char *str)
 
 	case GAME_STARTED:
 		printf("Game is on!\n");
+		game_started = 1;
 		break;
 
 	case TURN_SWITCH:
 		printf("%s's turn\n", params);
 		fputs("%s's turn\n", params, client_log);
+		if (strcmp(params, my_name) == 0) // if it is my turn now
+			my_turn = 1;
+		else
+			my_turn = 0;
 		break;
 
 	case BOARD_VIEW:
@@ -136,6 +142,8 @@ void cmd_to_action(char *str)
 
 	case PLAY_DECLINED:
 		printf("Error: %s\n", params);
+		if (strcmp(params, "illegal move") == 0)
+			my_turn = 1;
 		break;
 
 	case GAME_ENDED:
@@ -160,4 +168,21 @@ int chk_if_all_digits(char *str)
 		str++;
 	}
 	return 1;
+}
+
+void intit_board(int board[][7])
+{
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 7; j++)
+		{
+			board[i][j] = 0;
+		}
+	}
+}
+
+void get_cmd_from_file(char *input,char *fp)
+{
+	fgets(input, MAX_MSG_SIZE, fp);
+	trimwhitespace(input);
 }
