@@ -218,15 +218,13 @@ static void CleanupWorkerThreads()
 static DWORD ServiceThread( SOCKET *t_socket ) 
 {
 	char SendStr[SEND_STR_SIZE];
-
-	BOOL Done = FALSE;
+	BOOL endConnect = FALSE;
 	TransferResult_t SendRes;
 	TransferResult_t RecvRes;
 
-	strcpy( SendStr, "Welcome to this server!" );
 
+	strcpy( SendStr, "Welcome to this server!" );
 	SendRes = SendString( SendStr, *t_socket );
-	
 	if ( SendRes == TRNS_FAILED ) 
 	{
 		printf( "Service socket error while writing, closing thread.\n" );
@@ -234,7 +232,7 @@ static DWORD ServiceThread( SOCKET *t_socket )
 		return 1;
 	}
 	
-	while ( !Done ) 
+	while ( !endConnect)
 	{		
 		char *AcceptedStr = NULL;
 		
@@ -258,10 +256,7 @@ static DWORD ServiceThread( SOCKET *t_socket )
 		}
 
 		//After reading a single line, checking to see what to do with it
-		//If got "hello" send back "what's up?"
-		//If got "how are you?" send back "great"
-		//If got "bye" send back "see ya!" and then end the thread
-		//Otherwise, send "I don't understand"
+		
 		
 		if ( STRINGS_ARE_EQUAL( AcceptedStr , "hello" ) ) 
 			{ strcpy( SendStr, "what's up?" );} 
@@ -270,7 +265,7 @@ static DWORD ServiceThread( SOCKET *t_socket )
 		else if ( STRINGS_ARE_EQUAL( AcceptedStr, "bye" )) 
 		{
 			strcpy( SendStr, "see ya!" );
-			Done = TRUE;
+			endConnect = TRUE;
 		}
 		else 
 			{ strcpy( SendStr, "I don't understand" ); }
@@ -291,7 +286,6 @@ static DWORD ServiceThread( SOCKET *t_socket )
 	closesocket( *t_socket );
 	return 0;
 }
-
 
 
 /*
