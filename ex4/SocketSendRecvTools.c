@@ -11,7 +11,7 @@ Description		-
 
 // Function Definitions --------------------------------------------------------
 
-TransferResult_t SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd)
+TransferResult_t SendBuffer(char* Buffer, int BytesToSend, SOCKET sd)
 {
 	const char* CurPlacePtr = Buffer;
 	int BytesTransferred;
@@ -36,7 +36,7 @@ TransferResult_t SendBuffer(const char* Buffer, int BytesToSend, SOCKET sd)
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
-TransferResult_t SendString(const char *Str, SOCKET sd)
+TransferResult_t SendString(char *Str, SOCKET sd)
 {
 	/* Send the the request to the server on socket sd */
 	int TotalStringSizeInBytes;
@@ -48,14 +48,14 @@ TransferResult_t SendString(const char *Str, SOCKET sd)
 	TotalStringSizeInBytes = (int)(strlen(Str) + 1); // terminating zero also sent	
 
 	SendRes = SendBuffer(
-		(const char *)(&TotalStringSizeInBytes),
+		(char *)(&TotalStringSizeInBytes),
 		(int)(sizeof(TotalStringSizeInBytes)), // sizeof(int) 
 		sd);
 
 	if (SendRes != TRNS_SUCCEEDED) return SendRes;
 
 	SendRes = SendBuffer(
-		(const char *)(Str),
+		(char *)(Str),
 		(int)(TotalStringSizeInBytes),
 		sd);
 
@@ -96,6 +96,7 @@ TransferResult_t ReceiveString(char** OutputStrPtr, SOCKET sd)
 	/* Recv the the request to the server on socket sd */
 	int TotalStringSizeInBytes;
 	TransferResult_t RecvRes;
+	char tmpStr[MAX_MSG_SIZE];
 
 
 	/* The request is received in two parts. First the Length of the string (stored in
@@ -108,9 +109,13 @@ TransferResult_t ReceiveString(char** OutputStrPtr, SOCKET sd)
 
 	if (RecvRes != TRNS_SUCCEEDED) return RecvRes;
 
+	//char* StrBuffer  = (char*)malloc(TotalStringSizeInBytes * sizeof(char));
+
+	//if (StrBuffer == NULL)
+	//	return TRNS_FAILED;
 
 	RecvRes = ReceiveBuffer(
-		(char *)(*OutputStrPtr),
+		(char *)tmpStr,
 		(int)(TotalStringSizeInBytes),
 		sd);
 

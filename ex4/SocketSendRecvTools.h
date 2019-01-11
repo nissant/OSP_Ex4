@@ -13,6 +13,7 @@ Description		-
 #define SOCKET_SEND_RECV_TOOLS_H
 
 // Defines ---------------------------------------------------------------------
+#define MAX_MSG_SIZE 100
 // Global Variables ------------------------------------------------------------
 	
 

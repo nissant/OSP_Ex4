@@ -9,8 +9,18 @@ Description		-
 #include "Server_Module.h"
 #include "SocketSendRecvTools.h"
 
+// Global Definitions ----------------------------------------------------------
+p_count = 0;
 
 // Function Definitions --------------------------------------------------------
+
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns		–
+*/
 void MainServer(char *argv[])
 {
 	int Ind;
@@ -22,10 +32,30 @@ void MainServer(char *argv[])
 	int ListenRes;
 
 	ServerPort = (unsigned short)strtol(argv[3], NULL, 10);
-	FILE *fp_server_log = fopen(argv[2], "wt");
+	fp_server_log = fopen(argv[2], "wt");
 	if (fp_server_log == NULL) {
 		printf("ERROR: Failed to open server log file stream, can't complete the task! \n");
-		goto file_stream_fail;
+		goto server_cleanup_0;
+	}
+
+	// Create player mutex
+	P_Mutex = CreateMutex(
+		NULL,   /* default security attributes */
+		FALSE,	/* don't lock mutex immediately */
+		NULL); /* un-named */
+	if (P_Mutex == NULL) {
+		printf("Encountered error while creating mutex, ending program. Last Error = 0x%x\n", GetLastError());
+		goto server_cleanup_0;
+	}
+	// Create event 
+	gameStart = CreateEvent(
+		NULL, /* default security attributes */
+		TRUE,       /* manual-reset event */
+		FALSE,      /* initial state is non-signaled */
+		NULL);         /* name */
+	if (gameStart == NULL) {
+		printf("Encountered error while creating event, ending program. Last Error = 0x%x\n", GetLastError());
+		goto server_cleanup_0;
 	}
 
 	// Initialize Winsock.
@@ -102,11 +132,12 @@ void MainServer(char *argv[])
 	// Initialize all thread handles to NULL, to mark that they have not been initialized
 	for ( Ind = 0; Ind < NUM_OF_WORKER_THREADS; Ind++ )
 		ThreadHandles[Ind] = NULL;
-
-    printf( "Waiting for a client to connect...\n" );
     
+	// Initialize players variables
+	init_players_newGame();
 
-	while (1) // Change to while on some endGame flag..
+	printf("Waiting for a client player to connect...\n");
+	while (1)
 	{
 		SOCKET AcceptSocket = accept( MainSocket, NULL, NULL );
 		if ( AcceptSocket == INVALID_SOCKET )
@@ -155,11 +186,18 @@ server_cleanup_1:
 
 	fclose(fp_server_log);
 
-file_stream_fail:
+server_cleanup_0:
 	return;
 }
 
 
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns		–
+*/
 static int FindFirstUnusedThreadSlot()
 { 
 	int Ind;
@@ -186,6 +224,13 @@ static int FindFirstUnusedThreadSlot()
 }
 
 
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns		–
+*/
 static void CleanupWorkerThreads()
 {
 	int Ind; 
@@ -215,27 +260,73 @@ static void CleanupWorkerThreads()
 
 
 //Service thread is the thread that opens for each successful client connection and "talks" to the client.
-static DWORD ServiceThread( SOCKET *t_socket ) 
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns		–
+*/
+static DWORD ServiceThread(SOCKET *t_socket) 
 {
-	char SendStr[SEND_STR_SIZE];
+	char SendStr[MAX_MSG_SIZE];
+	char AcceptedStr[MAX_MSG_SIZE];
+	char paramStr[MAX_MSG_SIZE];
+	int msgType;
+	player *asignedPlayer;
 	BOOL endConnect = FALSE;
+	BOOL playerAsigned = FALSE;
 	TransferResult_t SendRes;
 	TransferResult_t RecvRes;
-
-
-	strcpy( SendStr, "Welcome to this server!" );
-	SendRes = SendString( SendStr, *t_socket );
-	if ( SendRes == TRNS_FAILED ) 
-	{
-		printf( "Service socket error while writing, closing thread.\n" );
-		closesocket( *t_socket );
-		return 1;
+	DWORD Res;
+	
+	// Assign player to handling thread and accept player
+	while (!playerAsigned) {
+		RecvRes = ReceiveString(&AcceptedStr, *t_socket);
+		if (RecvRes == TRNS_FAILED)
+		{
+			printf("Service socket error while reading, closing thread.\n");
+			printServerLog("Custom message: Service socket error while reading, closing thread.\n", TRUE);
+			closesocket(*t_socket);
+			exit (ERROR_CODE);
+		}
+		else if (RecvRes == TRNS_DISCONNECTED)
+		{
+			printf("Connection closed while reading, closing thread.\n");
+			closesocket(*t_socket);
+			return ERROR_CODE;
+		}
+		msgType = parseMessage(AcceptedStr, paramStr);
+		if (msgType != NEW_USER_REQUEST) {
+			ServerMSG(PLAY_DECLINED, insertSemicolon("Game has not started"), *t_socket);
+			continue;
+		}
+		else {	// Handle new user request
+			if (asignThrdPlayer(paramStr, &asignedPlayer, *t_socket) != 0){
+				continue;	// NEW_USER_DECLINED
+			}
+			else {
+				playerAsigned = TRUE; // NEW_USER_ACCEPTED
+			}
+		}
 	}
 	
+	// Wait for 2 players to be accepted
+	/*
+	Res = WaitForSingleObject(gameStart, INFINITE);
+	if (Res != WAIT_OBJECT_0) {
+		printf("Error when waiting for game start event\n");
+		printServerLog("Custom message: Error when waiting for game start event\n", TRUE);
+		exit(ERROR_CODE);
+	}
+	*/
+
+	//Game started, Turn Switch, Board View
+	ServerMSG(GAME_STARTED, NULL, t_socket);
+
+
 	while ( !endConnect)
 	{		
-		char *AcceptedStr = NULL;
-		
 		RecvRes = ReceiveString( &AcceptedStr , *t_socket );
 
 		if ( RecvRes == TRNS_FAILED )
@@ -278,8 +369,7 @@ static DWORD ServiceThread( SOCKET *t_socket )
 			closesocket( *t_socket );
 			return 1;
 		}
-
-		free( AcceptedStr );		
+	
 	}
 
 	printf("Conversation ended.\n");
@@ -287,6 +377,197 @@ static DWORD ServiceThread( SOCKET *t_socket )
 	return 0;
 }
 
+// Player routines
+
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns		–
+*/
+int init_players_newGame() {
+		p1.accepted = FALSE;
+		strcpy(p1.name, "");
+		p1.number = RED_PLAYER;
+		p1.myTurn = TRUE;
+
+		p2.accepted = FALSE;
+		strcpy(p2.name, "");
+		p2.number = YELLOW_PLAYER;
+		p2.myTurn = FALSE;
+	return 0;
+}
+
+
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns		–
+*/
+int asignThrdPlayer(char *name, player **p, SOCKET t_socket) {
+	DWORD wait_res, release_res;
+	TransferResult_t SendRes;
+	int ret = 0;
+	char num[2];
+	char SendStr[MAX_MSG_SIZE];
+	bool is_success;
+
+	if (p == NULL) {
+		printf("Wrong usage!'n");
+		exit(ERROR_CODE);
+	}
+
+	wait_res = WaitForSingleObject(P_Mutex, INFINITE);
+	if (wait_res != WAIT_OBJECT_0) {
+		printf("Error when waiting for player mutex\n");
+		printServerLog("Custom message: Error when waiting for player mutex\n", TRUE);
+		exit(ERROR_CODE);
+	}
+
+	if (p1.accepted == FALSE) { 
+		// p1 is available
+		if (STRINGS_ARE_EQUAL(name, p2.name)) {
+			ret = -1;
+		}
+		else {
+			p1.accepted = TRUE;
+			strcpy(p1.name, name);
+			p_count++;
+			*p = &p1;
+		}
+	}
+	else {						
+		// p2 is available
+		if (STRINGS_ARE_EQUAL(name, p1.name)) {
+			ret = -1;
+		}
+		else {
+			p2.accepted = TRUE;
+			strcpy(p2.name, name);
+			p_count++;
+			*p = &p2;
+		}
+	}
+	// Check if 2 players are present
+	if (p_count == 2) {
+		is_success = SetEvent(gameStart);
+		if (is_success == FALSE) {
+			printf("Error when settings game start event\n");
+			printServerLog("Custom message: Error when settings game start event\n", TRUE);
+			exit(ERROR_CODE);
+		}
+	}
+
+	release_res = ReleaseMutex(P_Mutex);
+	if (release_res == FALSE) {
+		printf("Error when waiting for player mutex\n");
+		printServerLog("Custom message: Error when waiting for player mutex\n", TRUE);
+		exit(ERROR_CODE);
+	}
+
+	// Send msg to client
+	if (ret == -1) {
+		ServerMSG(NEW_USER_DECLINED, NULL, t_socket);
+	}
+	else if (ret == 0) {
+		itoa(p_count, num,10);
+		ServerMSG(NEW_USER_ACCEPTED, num, t_socket);
+	}
+
+	return ret;
+}
+
+
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns		–
+*/
+void ServerMSG(int msgType, char *msgStr, SOCKET t_socket) {
+	TransferResult_t SendRes;
+	char SendStr[MAX_MSG_SIZE];
+
+	switch (msgType) {
+	case NEW_USER_ACCEPTED:
+		strcpy(SendStr, "NEW_USER_ACCEPTED:");
+		strcat(SendStr, msgStr);
+		SendRes = SendString(SendStr, t_socket);
+		break;
+	case NEW_USER_DECLINED:
+		SendRes = SendString("NEW_USER_DECLINED", t_socket);
+		break;
+	case GAME_STARTED:
+		SendRes = SendString("GAME_STARTED", t_socket);
+		break;
+	case BOARD_VIEW:
+		break;
+	case TURN_SWITCH:
+		/*
+		if (p1.myTurn) {
+			strcpy(SendStr, "TURN_SWITCH:");
+			strcat(SendStr, p1.name);
+		}
+		else if (p2.myTurn){
+			strcpy(SendStr, "TURN_SWITCH:");
+			strcat(SendStr, p2.name);
+		}
+		*/
+		strcpy(SendStr, "TURN_SWITCH:");
+		strcat(SendStr, msgStr);
+		SendRes = SendString(SendStr, t_socket);
+		break;
+	case PLAY_ACCEPTED:
+		SendRes = SendString("PLAY_ACCEPTED", t_socket);
+		break;
+	case PLAY_DECLINED:
+		strcpy(SendStr, "PLAY_DECLINED:");
+		strcat(SendStr, msgStr);
+		SendRes = SendString(SendStr, t_socket);
+		break;
+	case GAME_ENDED:
+		strcpy(SendStr, "GAME_ENDED");
+		strcat(SendStr, msgStr);
+		SendRes = SendString(SendStr, t_socket);
+		break;
+	case RECEIVE_MESSAGE:
+		strcpy(SendStr, "RECEIVE_MESSAGE:");
+		strcat(SendStr, msgStr);
+		SendRes = SendString(SendStr, t_socket);
+		break;
+	default:
+		SendRes = SendString(SendStr, t_socket);
+	}
+	
+	if (SendRes == TRNS_FAILED)
+	{
+		printf("Service socket error while writing.\n");
+		closesocket(t_socket);
+		printServerLog("Custom message: Service socket error while writing.", TRUE);
+		exit(ERROR_CODE);
+	}
+}
+
+
+/*
+Function:
+------------------------
+Description – The function receive pointer to a string and trimms the string from white spaces
+Parameters	– *str is a pointer to a string to be trimmed.
+Returns		– Retrun pointer to trimmed string
+*/
+void printServerLog(char *msg, BOOL closeFile) {
+	fprintf(fp_server_log, "%s", msg);
+	if (closeFile) {
+		fclose(fp_server_log);
+	}
+}
+
+// String routines 
 
 /*
 Function
@@ -470,5 +751,3 @@ char *trimwhitespace(char *str)
 
 	return str;
 }
-
-
