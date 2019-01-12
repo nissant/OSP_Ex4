@@ -49,7 +49,7 @@ Description		-
 	
 
 	typedef struct p {
-		bool accepted;
+		bool playing;
 		bool myTurn;
 		char name[MAX_NAME_SIZE];
 		int number;
@@ -65,6 +65,7 @@ Description		-
 	HANDLE ThreadHandles[NUM_OF_WORKER_THREADS];
 	SOCKET ThreadInputs[NUM_OF_WORKER_THREADS];
 	unsigned short ServerPort;
+	HANDLE board_Mutex;
 	int gameBoard[BOARD_HEIGHT][BOARD_WIDTH];
 	FILE *fp_server_log;
 
@@ -73,6 +74,9 @@ Description		-
 	static int FindFirstUnusedThreadSlot();
 	static void CleanupWorkerThreads();
 	static DWORD ServiceThread(SOCKET *t_socket);
+	
+	// Game Handlers
+	int init_newGame();
 	void ServerMSG(int msgType, char *msgStr, SOCKET t_socket);
 	void printServerLog(char *msg, BOOL closeFile);
 	void clear_player(player *thrdPlayer);

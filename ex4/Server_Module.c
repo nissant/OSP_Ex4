@@ -44,7 +44,16 @@ void MainServer(char *argv[])
 		FALSE,	/* don't lock mutex immediately */
 		NULL); /* un-named */
 	if (P_Mutex == NULL) {
-		printf("Encountered error while creating mutex, ending program. Last Error = 0x%x\n", GetLastError());
+		printf("Encountered error while creating players mutex, ending program. Last Error = 0x%x\n", GetLastError());
+		goto server_cleanup_0;
+	}
+	// Create board game mutex
+	board_Mutex = CreateMutex(
+		NULL,   /* default security attributes */
+		FALSE,	/* don't lock mutex immediately */
+		NULL); /* un-named */
+	if (board_Mutex == NULL) {
+		printf("Encountered error while creating board game mutex, ending program. Last Error = 0x%x\n", GetLastError());
 		goto server_cleanup_0;
 	}
 	// Create event 
@@ -134,7 +143,7 @@ void MainServer(char *argv[])
 		ThreadHandles[Ind] = NULL;
     
 	// Initialize players variables
-	init_players_newGame();
+	init_newGame();
 
 	
 	while (1)
@@ -273,16 +282,17 @@ static DWORD ServiceThread(SOCKET *t_socket)
 	char SendStr[MAX_MSG_SIZE];
 	char AcceptedStr[MAX_MSG_SIZE];
 	char paramStr[MAX_MSG_SIZE];
+	char num[5];
 	int msgType;
 	player *thrdPlayer = NULL;
 	BOOL endConnect = FALSE;
 	BOOL playerAsigned = FALSE;
 	TransferResult_t SendRes;
 	TransferResult_t RecvRes;
-	DWORD Res;
+	
 	
 	// Assign player to handling thread and accept player
-	while (!playerAsigned || p_count != 2) {
+	while (!playerAsigned) {
 		RecvRes = ReceiveString(AcceptedStr, *t_socket);
 		if (RecvRes == TRNS_FAILED)
 		{
@@ -296,95 +306,48 @@ static DWORD ServiceThread(SOCKET *t_socket)
 			printf("Player disconnected. Ending communication.\n");
 			printServerLog("Player disconnected. Ending communication.\n", false);
 			closesocket(*t_socket);
-			clear_player(thrdPlayer);
 			return (SUCCESS_CODE);
 		}
-
+		// Parse message
 		msgType = parseMessage(AcceptedStr, paramStr);
-
 		if (msgType != NEW_USER_REQUEST) {
 			ServerMSG(PLAY_DECLINED, insertSemicolon("Game has not started"), *t_socket);
 			continue;
 		}
-
 		// Handle new user request
-		else if(!playerAsigned){
-			if (asignThrdPlayer(paramStr, &thrdPlayer, *t_socket) != 0){
-
-				continue;	// NEW_USER_DECLINED
-			}
-			else {
-				printf("New %s player accepted to the game!\n", thrdPlayer->color);
-				playerAsigned = TRUE; // NEW_USER_ACCEPTED
-			}
+		if (asignThrdPlayer(paramStr, &thrdPlayer, *t_socket) != 0){
+			// NEW_USER_DECLINED
+			ServerMSG(NEW_USER_DECLINED, NULL, *t_socket);
+			continue;	
+		}
+		else {
+			itoa(p_count, num, 10);
+			ServerMSG(NEW_USER_ACCEPTED, num, *t_socket);
+			printf("New %s player accepted to the game!\n", thrdPlayer->color);
+			playerAsigned = TRUE; // NEW_USER_ACCEPTED
 		}
 	}
 	
 	// Wait for 2 players to be accepted
-	/*
-	Res = WaitForSingleObject(gameStart, INFINITE);
+	DWORD Res = WaitForSingleObject(gameStart, INFINITE);
 	if (Res != WAIT_OBJECT_0) {
 		printf("Error when waiting for game start event\n");
 		printServerLog("Custom message: Error when waiting for game start event\n", TRUE);
 		exit(ERROR_CODE);
 	}
-	*/
-
 
 	//Game started, Turn Switch, Board View
 	ServerMSG(GAME_STARTED, NULL, *t_socket);
-
+	ServerMSG(TURN_SWITCH, NULL, *t_socket);
+	ServerMSG(BOARD_VIEW, itoa(MAXINT, paramStr, 10), *t_socket);
 
 	while ( !endConnect)
 	{		
-		RecvRes = ReceiveString( AcceptedStr , *t_socket );
 
-		if ( RecvRes == TRNS_FAILED )
-		{
-			printf( "Service socket error while reading, closing thread.\n" );
-			closesocket( *t_socket );
-			return 1;
-		}
-		else if ( RecvRes == TRNS_DISCONNECTED )
-		{
-			printf( "Connection closed while reading, closing thread.\n" );
-			closesocket( *t_socket );
-			return 1;
-		}
-		else
-		{
-			printf( "Got string : %s\n", AcceptedStr );
-		}
-
-		//After reading a single line, checking to see what to do with it
-		
-		
-		if ( STRINGS_ARE_EQUAL( AcceptedStr , "hello" ) ) 
-			{ strcpy( SendStr, "what's up?" );} 
-		else if ( STRINGS_ARE_EQUAL( AcceptedStr , "how are you?" ) ) 
-			{ strcpy( SendStr, "great" ); }
-		else if ( STRINGS_ARE_EQUAL( AcceptedStr, "bye" )) 
-		{
-			strcpy( SendStr, "see ya!" );
-			endConnect = TRUE;
-		}
-		else 
-			{ strcpy( SendStr, "I don't understand" ); }
-
-		SendRes = SendString( SendStr, *t_socket );
-	
-		if ( SendRes == TRNS_FAILED ) 
-		{
-			printf( "Service socket error while writing, closing thread.\n" );
-			closesocket( *t_socket );
-			return 1;
-		}
-	
 	}
 
-	printf("Conversation ended.\n");
 	closesocket( *t_socket );
-	return 0;
+	return SUCCESS_CODE;
 }
 
 
@@ -395,14 +358,15 @@ void clear_player(player *thrdPlayer) {
 		return;
 	}
 	else {
+		// TODO - Switch places and give turn to other player
 		strcpy(thrdPlayer->name, "");
 		thrdPlayer->myTurn = FALSE;
-		thrdPlayer->accepted = FALSE;
+		thrdPlayer->playing = FALSE;
 		p_count--;
+
 	}
 	return;
 }
-
 
 
 /*
@@ -412,18 +376,27 @@ Description –
 Parameters	–
 Returns		–
 */
-int init_players_newGame() {
-		p1.accepted = FALSE;
-		strcpy(p1.name, "");
-		p1.number = RED_PLAYER;
-		p1.myTurn = TRUE;
-		strcpy(p1.color, "Red");
+int init_newGame() {
+	int i, j;
 
-		p2.accepted = FALSE;
-		strcpy(p2.name, "");
-		p2.number = YELLOW_PLAYER;
-		p2.myTurn = FALSE;
-		strcpy(p2.color, "Yellow");
+	p1.playing = FALSE;
+	strcpy(p1.name, "");
+	p1.number = RED_PLAYER;
+	p1.myTurn = TRUE;
+	strcpy(p1.color, "Red");
+
+	p2.playing = FALSE;
+	strcpy(p2.name, "");
+	p2.number = YELLOW_PLAYER;
+	p2.myTurn = FALSE;
+	strcpy(p2.color, "Yellow");
+
+	for (i = 0; i < BOARD_HEIGHT; i++) {
+		for (j = 0; j < BOARD_WIDTH; j++) {
+			gameBoard[i][j] = 0;
+		}
+	}
+
 	return 0;
 }
 
@@ -439,7 +412,6 @@ int asignThrdPlayer(char *name, player **p, SOCKET t_socket) {
 	DWORD wait_res, release_res;
 	TransferResult_t SendRes;
 	int ret = 0;
-	char num[2];
 	char SendStr[MAX_MSG_SIZE];
 	bool is_success;
 
@@ -451,13 +423,13 @@ int asignThrdPlayer(char *name, player **p, SOCKET t_socket) {
 		exit(ERROR_CODE);
 	}
 
-	if (p1.accepted == FALSE) { 
+	if (p1.playing == FALSE) { 
 		// p1 is available
 		if (STRINGS_ARE_EQUAL(name, p2.name)) {
 			ret = -1;
 		}
 		else {
-			p1.accepted = TRUE;
+			p1.playing = TRUE;
 			strcpy(p1.name, name);
 			p_count++;
 			*p = &p1;
@@ -469,7 +441,7 @@ int asignThrdPlayer(char *name, player **p, SOCKET t_socket) {
 			ret = -1;
 		}
 		else {
-			p2.accepted = TRUE;
+			p2.playing = TRUE;
 			strcpy(p2.name, name);
 			p_count++;
 			*p = &p2;
@@ -490,15 +462,6 @@ int asignThrdPlayer(char *name, player **p, SOCKET t_socket) {
 		printf("Error when waiting for player mutex\n");
 		printServerLog("Custom message: Error when waiting for player mutex\n", TRUE);
 		exit(ERROR_CODE);
-	}
-
-	// Send msg to client
-	if (ret == -1) {
-		ServerMSG(NEW_USER_DECLINED, NULL, t_socket);
-	}
-	else if (ret == 0) {
-		itoa(p_count, num,10);
-		ServerMSG(NEW_USER_ACCEPTED, num, t_socket);
 	}
 
 	return ret;
@@ -529,20 +492,18 @@ void ServerMSG(int msgType, char *msgStr, SOCKET t_socket) {
 		SendRes = SendString("GAME_STARTED", t_socket);
 		break;
 	case BOARD_VIEW:
+		strcpy(SendStr, "BOARD_VIEW:");
+		strcat(SendStr, msgStr);
+		SendRes = SendString(SendStr, t_socket);
 		break;
 	case TURN_SWITCH:
-		/*
+		strcpy(SendStr, "TURN_SWITCH:");
 		if (p1.myTurn) {
-			strcpy(SendStr, "TURN_SWITCH:");
 			strcat(SendStr, p1.name);
 		}
-		else if (p2.myTurn){
-			strcpy(SendStr, "TURN_SWITCH:");
+		else if (p2.myTurn){ // Sanity
 			strcat(SendStr, p2.name);
 		}
-		*/
-		strcpy(SendStr, "TURN_SWITCH:");
-		strcat(SendStr, msgStr);
 		SendRes = SendString(SendStr, t_socket);
 		break;
 	case PLAY_ACCEPTED:

@@ -10,6 +10,7 @@ Description		-
 #include "Client_aux_funcs.h"
 #include "SocketSendRecvTools.h"
 
+
 int input_to_cmd(char *input, char *cmd)
 {
 	char tmp_input[MAX_MSG_SIZE];
@@ -88,6 +89,7 @@ void cmd_to_action(char *str)
 	int msg_type = 0;
 	char *pos = NULL;
 	char params[MAX_MSG_SIZE];
+	int num;
 
 	msg_type = parseMessage(str, params);
 	switch (msg_type)
@@ -118,8 +120,11 @@ void cmd_to_action(char *str)
 		break;
 
 	case BOARD_VIEW:
-		board[*params][*(params + 1)] = *(params + 2);
-		PrintBoard(board, GetStdHandle(STD_OUTPUT_HANDLE));
+		num = (int)strtol(params, NULL, 10);
+		if (num = MAXINT) {
+			PrintBoard(board, hConsole);
+		}
+		//board[*params][*(params + 1)] = *(params + 2);
 		break;
 
 	case RECEIVE_MESSAGE:
@@ -177,4 +182,45 @@ void get_cmd_from_file(char *input,char *fp)
 {
 	fgets(input, MAX_MSG_SIZE, fp);
 	trimwhitespace(input);
+}
+
+
+/***********************************************************
+* This function prints the board, and uses O as the holes.
+* The disks are presented by red or yellow backgrounds.
+* Input: A 2D array representing the board and the console handle
+* Output: Prints the board, no return value
+************************************************************/
+void PrintBoard(int board[][BOARD_WIDTH], HANDLE consoleHandle)
+{
+
+	int row, column;
+	//Draw the board
+	for (row = 0; row < BOARD_HEIGHT; row++)
+	{
+		for (column = 0; column < BOARD_WIDTH; column++)
+		{
+			printf("| ");
+			if (board[row][column] == RED_PLAYER)
+				SetConsoleTextAttribute(consoleHandle, RED);
+
+			else if (board[row][column] == YELLOW_PLAYER)
+				SetConsoleTextAttribute(consoleHandle, YELLOW);
+
+			printf("O");
+
+			SetConsoleTextAttribute(consoleHandle, BLACK);
+			printf(" ");
+		}
+		printf("\n");
+
+		//Draw dividing line between the rows
+		for (column = 0; column < BOARD_WIDTH; column++)
+		{
+			printf("----");
+		}
+		printf("\n");
+	}
+
+
 }

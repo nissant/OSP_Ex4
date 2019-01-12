@@ -141,7 +141,6 @@
   <ItemGroup>
     <ClCompile Include="Client_aux_funcs.c" />
     <ClCompile Include="main.c" />
-    <ClCompile Include="PrintBoard.c" />
     <ClCompile Include="Client_Module.c" />
     <ClCompile Include="Server_Module.c" />
     <ClCompile Include="SocketSendRecvTools.c" />

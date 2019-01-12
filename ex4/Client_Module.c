@@ -189,7 +189,8 @@ void MainClient(int argc, char *argv[])
 	DWORD wait_res;
 	SOCKADDR_IN clientService;
 	HANDLE hThread[3];
-	int port = atoi(argv[3]);
+	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);		//This handle allows us to change the console's color
+	int port = (int)strtol((argv[3]), NULL, 10);
 
 	init_board(board);	//init board with zero.
 
@@ -351,6 +352,7 @@ void MainClient(int argc, char *argv[])
 	CloseHandle(hThread[0]);
 	CloseHandle(hThread[1]);
 	CloseHandle(hThread[2]);
+	CloseHandle(hConsole);
 
 	closesocket(m_socket);
 	fclose(client_log);

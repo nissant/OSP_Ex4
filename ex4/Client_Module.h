@@ -18,6 +18,15 @@ Description		-
 	#define NEW_USER_REQUEST_STR	"NEW_USER_REQUEST"
 	#define SEND_MESSAGE_STR		"SEND_MESSAGE"
 
+
+	#define RED_PLAYER 1
+	#define YELLOW_PLAYER 2
+	#define BOARD_HEIGHT 6
+	#define BOARD_WIDTH  7
+	#define BLACK  15
+	#define RED    204
+	#define YELLOW 238
+
 	// Global Variables ------------------------------------------------------------
 	int game_ended;
 	int cmd_ready;
@@ -31,14 +40,11 @@ Description		-
 	char my_name			[MAX_MSG_SIZE];
 	FILE *client_log;
 	FILE *input_file;
-
-	
-
-	
-
-
+	HANDLE  hConsole;
 	SOCKET m_socket;
+
 	// Function Declarations -------------------------------------------------------
 	void MainClient(int argc, char *argv[]);
+	void PrintBoard(int board[][BOARD_WIDTH], HANDLE consoleHandle);
 
 #endif // SOCKET_EXAMPLE_CLIENT_H
