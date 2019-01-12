@@ -31,14 +31,14 @@ int input_to_cmd(char *input, char *cmd)
 	if (*tmp_input != 'p' && *tmp_input != 'm')
 	{
 		printf("Error: iilegal command\n");
-		fputs("Error: iilegal command\n", client_log);
+		fprintf(client_log, "Error: iilegal command\n");
 		return 1; // try again
 	}
 	space_pos = strchr(tmp_input, ' '); // find space
 	if (space_pos == NULL)
 	{
 		printf("Error: iilegal command\n");
-		fputs("Error: iilegal command\n", client_log);
+		fprintf(client_log, "Error: iilegal command\n");
 		return 1; // try again
 	}
 
@@ -46,14 +46,14 @@ int input_to_cmd(char *input, char *cmd)
 	if (strcmp(tmp_input, "play") != 0 && strcmp(tmp_input, "message") != 0)
 	{
 		printf("Error: iilegal command\n");
-		fputs("Error: iilegal command\n", client_log);
+		fprintf(client_log, "Error: iilegal command\n");
 		return 1; // try again
 	}
 	str_ptr = space_pos+1;
 	if (*str_ptr == '\0')
 	{
 		printf("Error: iilegal command\n");
-		fputs("Error: iilegal command\n", client_log);
+		fprintf(client_log, "Error: iilegal command\n");
 		return 1; // try again
 	}
 	//finished wrong command check --------------------------
@@ -64,7 +64,7 @@ int input_to_cmd(char *input, char *cmd)
 		if (!chk_if_all_digits(str_ptr))
 		{
 			printf("Error: iilegal command\n");
-			fputs("Error: iilegal command\n", client_log);
+			fprintf(client_log, "Error: iilegal command\n");
 			return 1; // try again
 		}
 		strcpy(cmd, PLAY_REQUEST_STR);
@@ -82,16 +82,6 @@ int input_to_cmd(char *input, char *cmd)
 	}
 }
 
-/*
-char* find_first_space(char *str)
-{
-	char *position_of_space;
-	position_of_space = str;
-	while (position_of_space != ' ')
-		position_of_space++;
-	return position_of_space;
-}
-*/
 
 void cmd_to_action(char *str)
 {
@@ -109,6 +99,7 @@ void cmd_to_action(char *str)
 
 	case NEW_USER_DECLINED:
 		printf("Request to join was refused\n");
+		shutdown(m_socket, SD_BOTH);
 		game_ended = 1;
 		break;
 
@@ -119,7 +110,7 @@ void cmd_to_action(char *str)
 
 	case TURN_SWITCH:
 		printf("%s's turn\n", params);
-		fputs("%s's turn\n", params, client_log);
+		fprintf(client_log, "%s's turn\n", params);
 		if (strcmp(params, my_name) == 0) // if it is my turn now
 			my_turn = 1;
 		else
@@ -155,7 +146,7 @@ void cmd_to_action(char *str)
 		break;
 	case BAD_MSG:
 		printf("Bad Communication message. exiting");
-		fputs("Bad Communication message.exiting", client_log);
+		fprintf(client_log, "Bad Communication message.exiting");
 
 	}
 }

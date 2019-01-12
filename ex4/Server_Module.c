@@ -136,9 +136,10 @@ void MainServer(char *argv[])
 	// Initialize players variables
 	init_players_newGame();
 
-	printf("Waiting for a client player to connect...\n");
+	
 	while (1)
 	{
+		printf("Waiting for a client player to connect...\n");
 		SOCKET AcceptSocket = accept( MainSocket, NULL, NULL );
 		if ( AcceptSocket == INVALID_SOCKET )
 		{
@@ -273,7 +274,7 @@ static DWORD ServiceThread(SOCKET *t_socket)
 	char AcceptedStr[MAX_MSG_SIZE];
 	char paramStr[MAX_MSG_SIZE];
 	int msgType;
-	player *asignedPlayer;
+	player *thrdPlayer = NULL;
 	BOOL endConnect = FALSE;
 	BOOL playerAsigned = FALSE;
 	TransferResult_t SendRes;
@@ -281,8 +282,8 @@ static DWORD ServiceThread(SOCKET *t_socket)
 	DWORD Res;
 	
 	// Assign player to handling thread and accept player
-	while (!playerAsigned) {
-		RecvRes = ReceiveString(&AcceptedStr, *t_socket);
+	while (!playerAsigned || p_count != 2) {
+		RecvRes = ReceiveString(AcceptedStr, *t_socket);
 		if (RecvRes == TRNS_FAILED)
 		{
 			printf("Service socket error while reading, closing thread.\n");
@@ -292,20 +293,28 @@ static DWORD ServiceThread(SOCKET *t_socket)
 		}
 		else if (RecvRes == TRNS_DISCONNECTED)
 		{
-			printf("Connection closed while reading, closing thread.\n");
+			printf("Player disconnected. Ending communication.\n");
+			printServerLog("Player disconnected. Ending communication.\n", false);
 			closesocket(*t_socket);
-			return ERROR_CODE;
+			clear_player(thrdPlayer);
+			return (SUCCESS_CODE);
 		}
+
 		msgType = parseMessage(AcceptedStr, paramStr);
+
 		if (msgType != NEW_USER_REQUEST) {
 			ServerMSG(PLAY_DECLINED, insertSemicolon("Game has not started"), *t_socket);
 			continue;
 		}
-		else {	// Handle new user request
-			if (asignThrdPlayer(paramStr, &asignedPlayer, *t_socket) != 0){
+
+		// Handle new user request
+		else if(!playerAsigned){
+			if (asignThrdPlayer(paramStr, &thrdPlayer, *t_socket) != 0){
+
 				continue;	// NEW_USER_DECLINED
 			}
 			else {
+				printf("New %s player accepted to the game!\n", thrdPlayer->color);
 				playerAsigned = TRUE; // NEW_USER_ACCEPTED
 			}
 		}
@@ -321,13 +330,14 @@ static DWORD ServiceThread(SOCKET *t_socket)
 	}
 	*/
 
+
 	//Game started, Turn Switch, Board View
-	ServerMSG(GAME_STARTED, NULL, t_socket);
+	ServerMSG(GAME_STARTED, NULL, *t_socket);
 
 
 	while ( !endConnect)
 	{		
-		RecvRes = ReceiveString( &AcceptedStr , *t_socket );
+		RecvRes = ReceiveString( AcceptedStr , *t_socket );
 
 		if ( RecvRes == TRNS_FAILED )
 		{
@@ -377,7 +387,23 @@ static DWORD ServiceThread(SOCKET *t_socket)
 	return 0;
 }
 
+
 // Player routines
+
+void clear_player(player *thrdPlayer) {
+	if (thrdPlayer == NULL) {
+		return;
+	}
+	else {
+		strcpy(thrdPlayer->name, "");
+		thrdPlayer->myTurn = FALSE;
+		thrdPlayer->accepted = FALSE;
+		p_count--;
+	}
+	return;
+}
+
+
 
 /*
 Function
@@ -391,11 +417,13 @@ int init_players_newGame() {
 		strcpy(p1.name, "");
 		p1.number = RED_PLAYER;
 		p1.myTurn = TRUE;
+		strcpy(p1.color, "Red");
 
 		p2.accepted = FALSE;
 		strcpy(p2.name, "");
 		p2.number = YELLOW_PLAYER;
 		p2.myTurn = FALSE;
+		strcpy(p2.color, "Yellow");
 	return 0;
 }
 
@@ -415,11 +443,7 @@ int asignThrdPlayer(char *name, player **p, SOCKET t_socket) {
 	char SendStr[MAX_MSG_SIZE];
 	bool is_success;
 
-	if (p == NULL) {
-		printf("Wrong usage!'n");
-		exit(ERROR_CODE);
-	}
-
+	// Wait for player mutex
 	wait_res = WaitForSingleObject(P_Mutex, INFINITE);
 	if (wait_res != WAIT_OBJECT_0) {
 		printf("Error when waiting for player mutex\n");
@@ -590,9 +614,10 @@ int parseMessage(char *in_str, char *out_str) {
 		msg_ptr++;
 		msg_ptr = removeCharacter(msg_ptr, ';');
 		msg_ptr = trimwhitespace(msg_ptr);
+		strcpy(out_str, msg_ptr);
 	}
 
-	strcpy(out_str, msg_ptr);
+	
 	in_str = trimwhitespace(in_str);
 
 	// Look for message type string

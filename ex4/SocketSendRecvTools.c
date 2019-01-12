@@ -91,13 +91,11 @@ TransferResult_t ReceiveBuffer(char* OutputBuffer, int BytesToReceive, SOCKET sd
 
 /*oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO*/
 
-TransferResult_t ReceiveString(char** OutputStrPtr, SOCKET sd)
+TransferResult_t ReceiveString(char* OutputStr, SOCKET sd)
 {
 	/* Recv the the request to the server on socket sd */
 	int TotalStringSizeInBytes;
 	TransferResult_t RecvRes;
-	char tmpStr[MAX_MSG_SIZE];
-
 
 	/* The request is received in two parts. First the Length of the string (stored in
 	   an int variable ), then the string itself. */
@@ -109,13 +107,8 @@ TransferResult_t ReceiveString(char** OutputStrPtr, SOCKET sd)
 
 	if (RecvRes != TRNS_SUCCEEDED) return RecvRes;
 
-	//char* StrBuffer  = (char*)malloc(TotalStringSizeInBytes * sizeof(char));
-
-	//if (StrBuffer == NULL)
-	//	return TRNS_FAILED;
-
 	RecvRes = ReceiveBuffer(
-		(char *)tmpStr,
+		(char *)(OutputStr),
 		(int)(TotalStringSizeInBytes),
 		sd);
 

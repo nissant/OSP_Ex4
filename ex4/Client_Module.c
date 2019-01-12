@@ -8,6 +8,7 @@ Description		-
 #include "Server_Module.h"
 #include "Client_Module.h"
 #include "SocketSendRecvTools.h"
+#include "Client_aux_funcs.h"
 
 
  game_ended		=	0;
@@ -34,32 +35,32 @@ static DWORD RecvDataThread(void)
 	while (!game_ended)
 	{
 		
-		RecvRes = ReceiveString( &server_to_client, m_socket );
+		RecvRes = ReceiveString( server_to_client, m_socket );
 
 		if ( RecvRes == TRNS_FAILED )
 		{
 			printf("Socket error while trying to read data from socket\n");
-			fputs("Socket error while trying to read data from socket\n", client_log);
+			fprintf(client_log, "Socket error while trying to read data from socket\n");
 			game_ended = 1;
 			exit(007);
 		}
 		else if ( RecvRes == TRNS_DISCONNECTED )
 		{
 			printf("Server disconnected. Exiting\n");
-			fputs("Server disconnected. Exiting\n", client_log);
+			fprintf(client_log, "Server disconnected. Exiting\n");
 			game_ended = 1;
 			return 0x555;
 		}
 		else
 		{
-			fputs("Received from server: %s\n", server_to_client, client_log);
+			fprintf(client_log,"Received from server: %s\n", server_to_client);
 			cmd_to_action(server_to_client);
 		}
 		
 
 	}
 
-	return 0;
+	return SUCCESS_CODE;
 }
 
 
@@ -91,13 +92,14 @@ static DWORD SendDataThread(void)
 			}
 			else {
 
-				fputs("Sent to Server: %s\n",cmd_to_server, client_log);
+				fprintf(client_log, "Sent to Server: %s\n" ,cmd_to_server);
 				cmd_ready = 0;
 			};
 		}
 		else		// new command is not ready yet
 			continue;
 	}
+	return SUCCESS_CODE;
 }
 
 
@@ -124,7 +126,8 @@ static DWORD player_input(void)
 		if (STRINGS_ARE_EQUAL(input, "exit"))
 		{
 			game_ended = 1;
-			return 0x555; //"quit" signals an exit from the client side
+			shutdown(m_socket, SD_BOTH);
+			return SUCCESS_CODE; //"quit" signals an exit from the client side
 		}
 
 		if (input_to_cmd(input, cmd_to_server)) // if entered, the command is wrong. try again
@@ -133,6 +136,7 @@ static DWORD player_input(void)
 		}
 		cmd_ready = 1;			// update the sending thread that there is a new message ready
 	}
+	return SUCCESS_CODE;
 }
 
 
@@ -158,7 +162,8 @@ static DWORD file_input(LPVOID lpParam)
 		if (STRINGS_ARE_EQUAL(input, "exit"))
 		{
 			game_ended = 1;
-			return 0x555; //"quit" signals an exit from the client side
+			shutdown(m_socket, SD_BOTH);
+			return SUCCESS_CODE; //"quit" signals an exit from the client side
 		}
 
 		if (1==input_to_cmd(input, cmd_to_server)) // if entered, the command is wrong. try again
@@ -169,6 +174,7 @@ static DWORD file_input(LPVOID lpParam)
 			my_turn = 0;
 		cmd_ready = 1;			// update the sending thread that there is a new message ready
 	}
+	return SUCCESS_CODE;
 }
 
 /*
@@ -196,15 +202,15 @@ void MainClient(int argc, char *argv[])
 	if (client_log == NULL)
 	{
 		printf("Failed to open log file for writing\n");
-		return (EXIT_ERROR);
+		exit(EXIT_ERROR);
 	}
 	
 	//Call WSAStartup and check for errors.
     int iResult = WSAStartup( MAKEWORD(2, 2), &wsaData );
 	if (iResult != NO_ERROR) {
-		printf("Error at WSAStartup()\n");
-		fputs("Error at WSAStartup()\n", client_log);
-		return EXIT_ERROR;
+		printf("Failed connecting to server on 127.0.0.1:%d. Exiting\n", port);
+		fprintf(client_log, "Failed connecting to server on 127.0.0.1:%d. Exiting\n", port);
+		exit(EXIT_ERROR);
 	}
 	//Call the socket function and return its value to the m_socket variable. 
 	// For this application, use the Internet address family, streaming sockets, and the TCP/IP protocol.
@@ -214,10 +220,10 @@ void MainClient(int argc, char *argv[])
 
 	// Check for errors to ensure that the socket is a valid socket.
     if ( m_socket == INVALID_SOCKET ) {
-        printf( "Error at socket(): %ld\n", WSAGetLastError() );
-		fputs("Error at socket(): %ld\n", WSAGetLastError(), client_log);
+		printf("Failed connecting to server on 127.0.0.1:%d. Exiting\n", port);
+		fprintf(client_log, "Failed connecting to server on 127.0.0.1:%d. Exiting\n", port);
 		WSACleanup();
-		return EXIT_ERROR;
+		exit(EXIT_ERROR);
     }
 	/*
 	 The parameters passed to the socket function can be changed for different implementations. 
@@ -244,8 +250,8 @@ void MainClient(int argc, char *argv[])
     // Call the connect function, passing the created socket and the sockaddr_in structure as parameters. 
 	// Check for general errors.
 	if ( connect( m_socket, (SOCKADDR*) &clientService, sizeof(clientService) ) == SOCKET_ERROR) {
-        printf( "Failed to connect.\n" );
-		fputs("Failed to connect.\n", client_log);
+		printf("Failed connecting to server on 127.0.0.1:%d. Exiting\n", port);
+		fprintf(client_log, "Failed connecting to server on 127.0.0.1:%d. Exiting\n", port);
         WSACleanup();
 		exit (EXIT_ERROR);
     }
@@ -258,6 +264,9 @@ void MainClient(int argc, char *argv[])
 		the active socket, a char buffer, the number of bytes to send or receive, and any flags to use.
 
 	*/	
+	printf("Connected to server on 127.0.0.1:%d\n",port);
+	fprintf(client_log, "Connected to server on 127.0.0.1:%d\n", port);
+
 
 	hThread[0]=CreateThread(
 		NULL,
@@ -270,7 +279,7 @@ void MainClient(int argc, char *argv[])
 	if (hThread[0] == NULL)
 	{
 		printf("couldn't create SendDataThread.\n");
-		fputs("couldn't create SendDataThread.\n", client_log);
+		fprintf(client_log, "couldn't create SendDataThread.\n");
 		return EXIT_ERROR;
 	}
 	
@@ -285,7 +294,7 @@ void MainClient(int argc, char *argv[])
 	if (hThread[1] == NULL)
 	{
 		printf("couldn't create RecvDataThread.\n");
-		fputs("couldn't create RecvDataThread.\n", client_log);
+		fprintf(client_log, "couldn't create RecvDataThread.\n");
 		return EXIT_ERROR;
 	}
 	
@@ -302,7 +311,7 @@ void MainClient(int argc, char *argv[])
 			if (hThread[2] == NULL)
 			{
 				printf("couldn't create file_input thread.\n");
-				fputs("couldn't create file_input thread.\n", client_log);
+				fprintf(client_log,"couldn't create file_input thread.\n");
 				return EXIT_ERROR;
 			}
 		
@@ -321,7 +330,7 @@ void MainClient(int argc, char *argv[])
 		if (hThread[2] == NULL)
 		{
 			printf("couldn't create player_input thread.\n");
-			fputs("couldn't create player_input thread.\n", client_log);
+			fprintf(client_log,"couldn't create player_input thread.\n");
 			return EXIT_ERROR;
 		}
 	}
@@ -331,7 +340,7 @@ void MainClient(int argc, char *argv[])
 	wait_res = WaitForMultipleObjects(3, hThread, FALSE, INFINITE);
 	if (wait_res != WAIT_OBJECT_0) {
 		printf("Error when waiting for Client's threads!\n");
-		fputs("Error when waiting for Client's threads!\n", client_log);
+		fprintf(client_log, "Error when waiting for Client's threads!\n");
 		return EXIT_ERROR;
 	}
 

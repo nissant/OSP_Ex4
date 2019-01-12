@@ -53,6 +53,7 @@ Description		-
 		bool myTurn;
 		char name[MAX_NAME_SIZE];
 		int number;
+		char *color[10];
 		}player;
 
 
@@ -74,7 +75,8 @@ Description		-
 	static DWORD ServiceThread(SOCKET *t_socket);
 	void ServerMSG(int msgType, char *msgStr, SOCKET t_socket);
 	void printServerLog(char *msg, BOOL closeFile);
-	
+	void clear_player(player *thrdPlayer);
+
 	// String handlers
 	int parseMessage(char *in_str, char *out_str);
 	char* removeCharacter(char* str, char find);
