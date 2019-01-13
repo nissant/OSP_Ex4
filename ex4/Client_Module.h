@@ -36,7 +36,7 @@ Description		-
 	int my_turn;
 	char cmd_to_server		[MAX_MSG_SIZE];
 	char server_to_client	[MAX_MSG_SIZE];
-	int board[6][7];
+	int board[BOARD_HEIGHT][BOARD_WIDTH];
 	char my_name			[MAX_MSG_SIZE];
 	FILE *client_log;
 	FILE *input_file;

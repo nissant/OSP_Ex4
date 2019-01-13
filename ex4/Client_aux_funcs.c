@@ -128,8 +128,8 @@ void cmd_to_action(char *str)
 		break;
 
 	case RECEIVE_MESSAGE:
-		pos = strchr(params, ' ');
-		*pos = ':';
+		//pos = strchr(params, ' ');
+		//*pos = ':';
 		printf("%s\n", params);
 		break;
 
@@ -167,7 +167,7 @@ int chk_if_all_digits(char *str)
 	return 1;
 }
 
-void init_board(int board[][7])
+void init_board(void)
 {
 	for (int i = 0; i < 6; i++)
 	{

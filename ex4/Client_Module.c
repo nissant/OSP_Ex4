@@ -192,7 +192,7 @@ void MainClient(int argc, char *argv[])
 	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);		//This handle allows us to change the console's color
 	int port = (int)strtol((argv[3]), NULL, 10);
 
-	init_board(board);	//init board with zero.
+	init_board();	//init board with zero.
 
 
     // Initialize Winsock.

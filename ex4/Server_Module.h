@@ -54,6 +54,10 @@ Description		-
 		char name[MAX_NAME_SIZE];
 		int number;
 		char *color[10];
+
+		SOCKET S;
+		bool gotMessage;
+		char msg[MAX_MSG_SIZE];
 		}player;
 
 
@@ -66,7 +70,7 @@ Description		-
 	SOCKET ThreadInputs[NUM_OF_WORKER_THREADS];
 	unsigned short ServerPort;
 	HANDLE board_Mutex;
-	int gameBoard[BOARD_HEIGHT][BOARD_WIDTH];
+	int serverBoard[BOARD_HEIGHT][BOARD_WIDTH];
 	FILE *fp_server_log;
 
 	// Function Declarations -------------------------------------------------------
@@ -74,9 +78,16 @@ Description		-
 	static int FindFirstUnusedThreadSlot();
 	static void CleanupWorkerThreads();
 	static DWORD ServiceThread(SOCKET *t_socket);
+	static DWORD InboxThread(player *thrdPlayer);
+	static DWORD GameThread(player *thrdPlayer);
 	
 	// Game Handlers
 	int init_newGame();
+	void init_server_board(void);
+	void check_incoming_msg(player *thrdPlayer, SOCKET t_socket);
+	void send_outgoing_msg(char *paramStr, player *thrdPlayer, SOCKET t_socket);
+	void check_verdict(BOOL *endGame, SOCKET t_socket);
+	void switch_turns(SOCKET t_socket);
 	void ServerMSG(int msgType, char *msgStr, SOCKET t_socket);
 	void printServerLog(char *msg, BOOL closeFile);
 	void clear_player(player *thrdPlayer);
