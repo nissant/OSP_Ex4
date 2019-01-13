@@ -42,14 +42,14 @@ static DWORD RecvDataThread(void)
 			printf("Socket error while trying to read data from socket\n");
 			fprintf(client_log, "Socket error while trying to read data from socket\n");
 			game_ended = 1;
-			exit(007);
+			return (SUCCESS_CODE);
 		}
 		else if ( RecvRes == TRNS_DISCONNECTED )
 		{
 			printf("Server disconnected. Exiting\n");
 			fprintf(client_log, "Server disconnected. Exiting\n");
 			game_ended = 1;
-			return 0x555;
+			return (SUCCESS_CODE);
 		}
 		else
 		{
@@ -188,7 +188,8 @@ void MainClient(int argc, char *argv[])
 {
 	DWORD wait_res;
 	SOCKADDR_IN clientService;
-	HANDLE hThread[3];
+	HANDLE hThread[2];
+	HANDLE inputThread;
 	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);		//This handle allows us to change the console's color
 	int port = (int)strtol((argv[3]), NULL, 10);
 
@@ -301,7 +302,7 @@ void MainClient(int argc, char *argv[])
 	
 	if (strcmp(argv[4], "file") == 0) // if file input
 	{
-		hThread[2] = CreateThread(
+		inputThread = CreateThread(
 			NULL,
 			0,
 			(LPTHREAD_START_ROUTINE)file_input,
@@ -309,7 +310,7 @@ void MainClient(int argc, char *argv[])
 			0,
 			NULL
 			);
-			if (hThread[2] == NULL)
+			if (inputThread == NULL)
 			{
 				printf("couldn't create file_input thread.\n");
 				fprintf(client_log,"couldn't create file_input thread.\n");
@@ -320,7 +321,7 @@ void MainClient(int argc, char *argv[])
 	else 
 	{
 
-		hThread[2] = CreateThread(
+		inputThread = CreateThread(
 			NULL,
 			0,
 			(LPTHREAD_START_ROUTINE)player_input,
@@ -328,7 +329,7 @@ void MainClient(int argc, char *argv[])
 			0,
 			NULL
 		);
-		if (hThread[2] == NULL)
+		if (inputThread == NULL)
 		{
 			printf("couldn't create player_input thread.\n");
 			fprintf(client_log,"couldn't create player_input thread.\n");
@@ -336,18 +337,16 @@ void MainClient(int argc, char *argv[])
 		}
 	}
 
-	//WaitForMultipleObjects(3,hThread,FALSE,INFINITE);
-
-	wait_res = WaitForMultipleObjects(3, hThread, FALSE, INFINITE);
+	wait_res = WaitForMultipleObjects((DWORD)2, hThread, true, INFINITE);
 	if (wait_res != WAIT_OBJECT_0) {
 		printf("Error when waiting for Client's threads!\n");
 		fprintf(client_log, "Error when waiting for Client's threads!\n");
 		return EXIT_ERROR;
 	}
 
-	TerminateThread(hThread[0],0x555);
-	TerminateThread(hThread[1],0x555);
-	TerminateThread(hThread[2],0x555);
+	//TerminateThread(hThread[0],0x555);
+	//TerminateThread(hThread[1],0x555);
+	TerminateThread(inputThread, SUCCESS_CODE);
 
 	CloseHandle(hThread[0]);
 	CloseHandle(hThread[1]);
@@ -360,5 +359,5 @@ void MainClient(int argc, char *argv[])
 	
 	WSACleanup();
     
-	return;
+	return SUCCESS_CODE;
 }

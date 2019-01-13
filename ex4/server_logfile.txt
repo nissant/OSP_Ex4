@@ -1,0 +1,4 @@
+Player disconnected. Ending communication.
+Player disconnected. Ending communication.
+Custom message: Service socket error while reading, closing thread.
+Player disconnected. Ending communication.

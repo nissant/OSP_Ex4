@@ -44,16 +44,18 @@ Description		-
 	// Game
 	#define RED_PLAYER 1
 	#define YELLOW_PLAYER 2
-
 	#define BOARD_HEIGHT 6
 	#define BOARD_WIDTH  7
+	#define LOOSER 0
+	#define DRAW 1
+	#define WINNER 2
 	
-
 	typedef struct p {
 		bool playing;
 		bool myTurn;
 		char name[MAX_NAME_SIZE];
 		int number;
+		int result;
 		char *color[10];
 
 		SOCKET S;
@@ -84,15 +86,17 @@ Description		-
 	static DWORD Server_Send_Thread(player *thrdPlayer);
 	
 	// Game Handlers
-	int init_newGame();
+	int init_newGame(void);
 	void init_server_board(void);
 	void check_incoming_msg(player *thrdPlayer, SOCKET t_socket);
 	void send_outgoing_msg(char *paramStr, player *thrdPlayer, SOCKET t_socket);
-	bool handle_move(char *paramStr, player *thrdPlayer);
-	void verdict_or_switch(player *thrdPlayer);
+	bool handle_move(char *paramStr, player *thrdPlayer,int *row, int *col);
+	void verdict_or_switch(player *thrdPlayer,int row, int col);
+	int getResult(int player, int row, int col);
+	bool areFourConnected(int player, int row, int col);
+	bool isBoardFull(void);
 	void ServerMSG(int msgType, char *msgStr, SOCKET t_socket);
-	void printServerLog(char *msg, BOOL closeFile);
-	void clear_player(player *thrdPlayer);
+	void printServerLog(char *msg, bool closeFile);
 
 	// String handlers
 	int parseMessage(char *in_str, char *out_str);
