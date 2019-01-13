@@ -24,6 +24,7 @@ Description		-
 	#define STRINGS_ARE_EQUAL( Str1, Str2 ) ( strcmp( (Str1), (Str2) ) == 0 )
 	#define MAX_MSG_SIZE 100
 	#define MAX_NAME_SIZE 30
+	#define BOARD_VIEW_SIZE 4
 
 	// Message Protocol
 	#define NEW_USER_REQUEST 1
@@ -63,31 +64,32 @@ Description		-
 
 	// Global Variables ------------------------------------------------------------
 	HANDLE P_Mutex;
-	HANDLE gameStart;
 	int p_count;
 	player p1, p2;
 	HANDLE ThreadHandles[NUM_OF_WORKER_THREADS];
 	SOCKET ThreadInputs[NUM_OF_WORKER_THREADS];
-	unsigned short ServerPort;
+	// Board variables
 	HANDLE board_Mutex;
 	int serverBoard[BOARD_HEIGHT][BOARD_WIDTH];
+	char boardUpdate[BOARD_VIEW_SIZE];
+	// General
 	FILE *fp_server_log;
-
+	unsigned short ServerPort;
 	// Function Declarations -------------------------------------------------------
 	void MainServer(char *argv[]);
 	static int FindFirstUnusedThreadSlot();
 	static void CleanupWorkerThreads();
 	static DWORD ServiceThread(SOCKET *t_socket);
-	static DWORD InboxThread(player *thrdPlayer);
-	static DWORD GameThread(player *thrdPlayer);
+	static DWORD Server_Rec_Thread(player *thrdPlayer);
+	static DWORD Server_Send_Thread(player *thrdPlayer);
 	
 	// Game Handlers
 	int init_newGame();
 	void init_server_board(void);
 	void check_incoming_msg(player *thrdPlayer, SOCKET t_socket);
 	void send_outgoing_msg(char *paramStr, player *thrdPlayer, SOCKET t_socket);
-	void check_verdict(BOOL *endGame, SOCKET t_socket);
-	void switch_turns(SOCKET t_socket);
+	bool handle_move(char *paramStr, player *thrdPlayer);
+	void verdict_or_switch(player *thrdPlayer);
 	void ServerMSG(int msgType, char *msgStr, SOCKET t_socket);
 	void printServerLog(char *msg, BOOL closeFile);
 	void clear_player(player *thrdPlayer);

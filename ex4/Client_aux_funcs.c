@@ -51,6 +51,7 @@ int input_to_cmd(char *input, char *cmd)
 		return 1; // try again
 	}
 	str_ptr = space_pos+1;
+	trimwhitespace(str_ptr);
 	if (*str_ptr == '\0')
 	{
 		printf("Error: iilegal command\n");
@@ -62,7 +63,7 @@ int input_to_cmd(char *input, char *cmd)
 
 	if (*tmp_input == 'p') // if the input is a play command
 	{
-		if (!chk_if_all_digits(str_ptr))
+		if (!chk_if_all_digits(str_ptr) || strlen(str_ptr) != 1)
 		{
 			printf("Error: iilegal command\n");
 			fprintf(client_log, "Error: iilegal command\n");
@@ -71,7 +72,7 @@ int input_to_cmd(char *input, char *cmd)
 		strcpy(cmd, PLAY_REQUEST_STR);
 		strcat(cmd, ":");			//put : inside the cmd
 		strcat(cmd, str_ptr); //put the number of column inside the cmd
-		return 2;
+		return 0;
 	}
 	else if (*tmp_input == 'm') //if the input is a message
 	{
@@ -121,10 +122,16 @@ void cmd_to_action(char *str)
 
 	case BOARD_VIEW:
 		num = (int)strtol(params, NULL, 10);
-		if (num = MAXINT) {
+		if (num == MAXINT) {
 			PrintBoard(board, hConsole);
 		}
-		//board[*params][*(params + 1)] = *(params + 2);
+		else {
+			int row = (int)(*params - '0'); //(int)strtol(params, NULL, 10);
+			int col = (int)(*(params+1) - '0');//(int)strtol((params + 1), NULL, 10);
+			int coin = (int)(*(params+2) - '0');//(int)strtol((params + 2), NULL, 10);
+			board[row][col] = coin;
+			PrintBoard(board, hConsole);
+		}
 		break;
 
 	case RECEIVE_MESSAGE:
@@ -196,7 +203,7 @@ void PrintBoard(int board[][BOARD_WIDTH], HANDLE consoleHandle)
 
 	int row, column;
 	//Draw the board
-	for (row = 0; row < BOARD_HEIGHT; row++)
+	for (row = BOARD_HEIGHT-1; row >= 0; row--)
 	{
 		for (column = 0; column < BOARD_WIDTH; column++)
 		{
