@@ -1,13 +1,12 @@
 /*
 Authors			- Eli Slavutsky (308882992) & Nisan Tagar (302344031)
-Project Name	- Ex4
-Description		-
+Project Name	- Ex4 
+Description		- Connect 4 - A Server/Client game with human or file mode players
+				- Socket Module provided by OSP course materials with minimal modifications
 */
 
 // Includes --------------------------------------------------------------------
-
 #include "SocketSendRecvTools.h"
-
 
 // Function Definitions --------------------------------------------------------
 

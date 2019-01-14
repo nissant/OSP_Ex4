@@ -1,7 +1,8 @@
-/*oOoOoO/*
+/*
 Authors			- Eli Slavutsky (308882992) & Nisan Tagar (302344031)
 Project Name	- Ex4
-Description		- 
+Description		- Connect 4 - A Server/Client game with human or file mode players
+				- Client module handles user cli, socket connection and file mode input
 */
 
 // Includes --------------------------------------------------------------------

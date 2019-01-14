@@ -1,25 +1,25 @@
 /*
 Authors			- Eli Slavutsky (308882992) & Nisan Tagar (302344031)
 Project Name	- Ex4
-Description		-
+Description		- Connect 4 - A Server/Client game with human or file mode players
+				- Server module handles player connection management and game flow control
 */
 
-// Includes --------------------------------------------------------------------
 
+// Includes --------------------------------------------------------------------
 #include "Server_Module.h"
 #include "SocketSendRecvTools.h"
 
 // Global Definitions ----------------------------------------------------------
-p_count = 0;
 
 // Function Definitions --------------------------------------------------------
 
 /*
-Function
+Function MainServer
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – Main Server routine. Handlese win socket init, game init, client connections and thread management/recycling
+Parameters	– *argv[] - command line arguments, it is provided that there are sufficient arguments for program requirements
+Returns		– none
 */
 void MainServer(char *argv[])
 {
@@ -40,34 +40,24 @@ void MainServer(char *argv[])
 
 	// Create player mutex
 	P_Mutex = CreateMutex(
-		NULL,   /* default security attributes */
-		false,	/* don't lock mutex immediately */
-		NULL); /* un-named */
+		NULL,		/* default security attributes */
+		false,		/* don't lock mutex immediately */
+		NULL);		/* un-named */
 	if (P_Mutex == NULL) {
 		printf("Encountered error while creating players mutex, ending program. Last Error = 0x%x\n", GetLastError());
 		goto server_cleanup_0;
 	}
+
 	// Create board game mutex
 	board_Mutex = CreateMutex(
-		NULL,   /* default security attributes */
-		false,	/* don't lock mutex immediately */
-		NULL); /* un-named */
+		NULL,		/* default security attributes */
+		false,		/* don't lock mutex immediately */
+		NULL);		/* un-named */
 	if (board_Mutex == NULL) {
 		printf("Encountered error while creating board game mutex, ending program. Last Error = 0x%x\n", GetLastError());
 		goto server_cleanup_0;
 	}
-	/*
-	// Create event 
-	gameStart = CreateEvent(
-		NULL,		// default security attributes 
-		true,       // manual-reset event 
-		false,      // initial state is non-signaled 
-		NULL);      // name 
-	if (gameStart == NULL) {
-		printf("Encountered error while creating event, ending program. Last Error = 0x%x\n", GetLastError());
-		goto server_cleanup_0;
-	}
-	*/
+
 	// Initialize Winsock.
     WSADATA wsaData;
     int StartupRes = WSAStartup( MAKEWORD( 2, 2 ), &wsaData );	           
@@ -112,8 +102,8 @@ void MainServer(char *argv[])
 
     service.sin_family = AF_INET;
     service.sin_addr.s_addr = Address;
-    service.sin_port = htons( ServerPort ); //The htons function converts a u_short from host to TCP/IP network byte order 
-	                                   //( which is big-endian ).
+    service.sin_port = htons( ServerPort ); //The htons function converts a u_short from host to TCP/IP network byte order ( which is big-endian ).
+
 	/*
 		The three lines following the declaration of sockaddr_in service are used to set up 
 		the sockaddr structure: 
@@ -202,11 +192,11 @@ server_cleanup_0:
 
 
 /*
-Function
+Function FindFirstUnusedThreadSlot
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – Thread handle recycling routine, makes sure that closed threads handles are closed and reset to null after use
+Parameters	– ThreadHandles[Ind] global handle array
+Returns		– none
 */
 static int FindFirstUnusedThreadSlot()
 { 
@@ -235,9 +225,9 @@ static int FindFirstUnusedThreadSlot()
 
 
 /*
-Function
+Function CleanupWorkerThreads
 ------------------------
-Description –
+Description – 
 Parameters	–
 Returns		–
 */
