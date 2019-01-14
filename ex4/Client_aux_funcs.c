@@ -73,7 +73,7 @@ int input_to_cmd(char *input, char *cmd)
 		strcpy(cmd, PLAY_REQUEST_STR);
 		strcat(cmd, ":");			//put : inside the cmd
 		strcat(cmd, str_ptr); //put the number of column inside the cmd
-		return 0;
+		return 2;
 	}
 	else if (*tmp_input == 'm') //if the input is a message
 	{

@@ -130,7 +130,7 @@ static DWORD player_input(void)
 			return SUCCESS_CODE; //"quit" signals an exit from the client side
 		}
 
-		if (input_to_cmd(input, cmd_to_server)) // if entered, the command is wrong. try again
+		if (input_to_cmd(input, cmd_to_server) == 1) // if entered, the command is wrong. try again
 		{
 			continue;		//try again
 		}
@@ -160,11 +160,14 @@ static DWORD file_input(LPVOID lpParam)
 	get_cmd_from_file(input, input_file);
 	input_to_cmd(input, cmd_to_server);
 	cmd_ready = 1;
-	
-	while (!game_ended && my_turn)
+	Sleep(MACHINE_DELAY_MS);
+
+	while (!game_ended ) 
 	{
-		if (cmd_ready)	// if cmd_ready == 1 the message has not been sent yet so dont get new data from player.
+		while (!my_turn || cmd_ready) { // Wait for my turn...if cmd_ready == 1 the message has not been sent yet so dont get new data from player.
 			continue;
+		}
+
 
 		get_cmd_from_file(input, input_file);
 
@@ -174,14 +177,19 @@ static DWORD file_input(LPVOID lpParam)
 			shutdown(m_socket, SD_BOTH);
 			return SUCCESS_CODE; //"quit" signals an exit from the client side
 		}
-
+		
 		if (1==input_to_cmd(input, cmd_to_server)) // if entered, the command is wrong. try again
 		{
 			continue;		//try again
 		}
+
+
 		if (2 == input_to_cmd(input, cmd_to_server)) // if the command is play command return 2
-			my_turn = 0;
+			my_turn = 0;							// Prevent the bot from racing on sending bogus messages
+
+		Sleep(MACHINE_DELAY_MS);
 		cmd_ready = 1;			// update the sending thread that there is a new message ready
+		
 	}
 	return SUCCESS_CODE;
 }
@@ -360,7 +368,7 @@ void MainClient(int argc, char *argv[])
 
 	CloseHandle(hThread[0]);
 	CloseHandle(hThread[1]);
-	CloseHandle(hThread[2]);
+	CloseHandle(inputThread);
 	CloseHandle(hConsole);
 
 	closesocket(m_socket);

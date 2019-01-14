@@ -446,7 +446,18 @@ static DWORD Server_Rec_Thread(player *thrdPlayer) {
 			// Handle player move
 			int row, col;
 			if (handle_move(paramStr, thrdPlayer, &row, &col)) {		// Check move & send accept/decline, update server board and send board view
-				verdict_or_switch(thrdPlayer, row, col);				// Check if ther is a game final result, if true send GAME_ENDED to each player
+				if (verdict_or_switch(thrdPlayer, row, col)) {			// Check if ther is a game final result, if true send GAME_ENDED to each player via sending thread
+				// Game end - allow client to disconnect without errors
+					RecvRes = ReceiveString(AcceptedStr, thrdPlayer->S);
+					if (RecvRes == TRNS_FAILED)
+					{
+						return SUCCESS_CODE;
+					}
+					else if (RecvRes == TRNS_DISCONNECTED)
+					{
+						return SUCCESS_CODE;
+					}
+				}
 			}
 			else {
 				// Play not legitimate
@@ -458,6 +469,8 @@ static DWORD Server_Rec_Thread(player *thrdPlayer) {
 			send_outgoing_msg(paramStr, thrdPlayer, thrdPlayer->S);	// Send message internally to other player
 		}
 	}
+
+
 	return SUCCESS_CODE;
 }
 
@@ -824,14 +837,15 @@ Function verdict_or_switch
 Description – After a play has been executed the function checks if there is a verdict, if not a turn switch is performed. The results and/or flags are updted and proper messaging is done by 
 				Server_Send_Thread thread function
 Parameters	– *thrdPlayer pointer to the player variable that is assigned to the handling player thread, row/col - current play's row/col position (to optimize calculation)
-Returns		– none
+Returns		– true if there is a verdict (win/draw), false if no verdict
 */
-void verdict_or_switch(player *thrdPlayer,int row, int col) {
+bool verdict_or_switch(player *thrdPlayer,int row, int col) {
 	int res = getResult(thrdPlayer->number, row, col);
 	if (res == -1){
 	// No results so switch turns
 		p1.myTurn = !p1.myTurn;
 		p2.myTurn = !p2.myTurn;
+		return false;
 	}
 	else {
 		// Write results and raise end flags
@@ -847,6 +861,7 @@ void verdict_or_switch(player *thrdPlayer,int row, int col) {
 			p1.result = LOOSER;
 			p2.result = WINNER;
 		}
+		return true;
 	}
 }
 

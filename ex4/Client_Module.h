@@ -28,6 +28,8 @@ Description		- Connect 4 - A Server/Client game with human or file mode players
 	#define RED    204
 	#define YELLOW 238
 
+	#define MACHINE_DELAY_MS 1500
+
 	// Global Variables ------------------------------------------------------------
 	int game_ended;
 	int cmd_ready;
@@ -47,5 +49,9 @@ Description		- Connect 4 - A Server/Client game with human or file mode players
 	// Function Declarations -------------------------------------------------------
 	void MainClient(int argc, char *argv[]);
 	void PrintBoard(int board[][BOARD_WIDTH], HANDLE consoleHandle);
+	static DWORD RecvDataThread(void);
+	static DWORD SendDataThread(void);
+	static DWORD player_input(void);
+	static DWORD file_input(LPVOID lpParam);
 
 #endif // SOCKET_EXAMPLE_CLIENT_H

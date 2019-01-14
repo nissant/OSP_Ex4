@@ -93,7 +93,7 @@ Description		- Connect 4 - A Server/Client game With human or file mode players
 	void check_incoming_msg(player *thrdPlayer, SOCKET t_socket);
 	void send_outgoing_msg(char *paramStr, player *thrdPlayer, SOCKET t_socket);
 	bool handle_move(char *paramStr, player *thrdPlayer,int *row, int *col);
-	void verdict_or_switch(player *thrdPlayer,int row, int col);
+	bool verdict_or_switch(player *thrdPlayer,int row, int col);
 	int getResult(int player, int row, int col);
 	bool areFourConnected(int player, int row, int col);
 	bool isBoardFull(void);

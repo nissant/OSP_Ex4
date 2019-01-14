@@ -1,0 +1,46 @@
+Connected to server on 127.0.0.1:2345
+Sent to Server: NEW_USER_REQUEST:awesome_student
+Received from server: NEW_USER_ACCEPTED:1
+Received from server: GAME_STARTED
+Received from server: TURN_SWITCH:awesome_student
+awesome_student's turn
+Received from server: BOARD_VIEW:2147483647
+Sent to Server: SEND_MESSAGE:Hi; ;there!
+Sent to Server: PLAY_REQUEST:5
+Received from server: PLAY_ACCEPTED
+Received from server: TURN_SWITCH:nisan
+nisan's turn
+Received from server: BOARD_VIEW:051
+Received from server: RECEIVE_MESSAGE:nisan; ;i; ;kill; ;you
+Received from server: TURN_SWITCH:awesome_student
+awesome_student's turn
+Received from server: BOARD_VIEW:002
+Sent to Server: PLAY_REQUEST:3
+Received from server: PLAY_ACCEPTED
+Received from server: TURN_SWITCH:nisan
+nisan's turn
+Received from server: BOARD_VIEW:031
+Received from server: TURN_SWITCH:awesome_student
+awesome_student's turn
+Received from server: BOARD_VIEW:102
+Sent to Server: PLAY_REQUEST:3
+Received from server: PLAY_ACCEPTED
+Received from server: TURN_SWITCH:nisan
+nisan's turn
+Received from server: BOARD_VIEW:131
+Received from server: TURN_SWITCH:awesome_student
+awesome_student's turn
+Received from server: BOARD_VIEW:202
+Sent to Server: PLAY_REQUEST:3
+Received from server: PLAY_ACCEPTED
+Received from server: TURN_SWITCH:nisan
+nisan's turn
+Received from server: BOARD_VIEW:231
+Received from server: TURN_SWITCH:awesome_student
+awesome_student's turn
+Received from server: BOARD_VIEW:152
+Sent to Server: PLAY_REQUEST:3
+Received from server: PLAY_ACCEPTED
+Received from server: BOARD_VIEW:331
+Received from server: GAME_ENDED:awesome_student
+Server disconnected. Exiting
