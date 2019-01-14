@@ -140,6 +140,15 @@ static DWORD player_input(void)
 }
 
 
+
+//Sending data to the server
+/*
+Function
+------------------------
+Description –
+Parameters	–
+Returns		–
+*/
 static DWORD file_input(LPVOID lpParam)
 {
 	char input[MAX_MSG_SIZE];
@@ -176,6 +185,7 @@ static DWORD file_input(LPVOID lpParam)
 	}
 	return SUCCESS_CODE;
 }
+
 
 /*
 Function

@@ -87,8 +87,9 @@ Description		- Connect 4 - A Server/Client game With human or file mode players
 	static DWORD Server_Send_Thread(player *thrdPlayer);
 	
 	// Game Handlers
-	int init_newGame(void);
+	void init_newGame();
 	void init_server_board(void);
+	int asignThrdPlayer(char *name, player **p);
 	void check_incoming_msg(player *thrdPlayer, SOCKET t_socket);
 	void send_outgoing_msg(char *paramStr, player *thrdPlayer, SOCKET t_socket);
 	bool handle_move(char *paramStr, player *thrdPlayer,int *row, int *col);

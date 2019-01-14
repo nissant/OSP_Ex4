@@ -227,9 +227,9 @@ static int FindFirstUnusedThreadSlot()
 /*
 Function CleanupWorkerThreads
 ------------------------
-Description – 
-Parameters	–
-Returns		–
+Description – Clean up threads. Called in case of detected errors and server app exit
+Parameters	– ThreadHandles[Ind] global handle array
+Returns		– none
 */
 static void CleanupWorkerThreads()
 {
@@ -259,13 +259,14 @@ static void CleanupWorkerThreads()
 }
 
 
-//Service thread is the thread that opens for each successful client connection and "talks" to the client.
+
 /*
-Function
+Function ServiceThread
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – Main player thread routine, handles all player communication from user accepted to game ended as described in spec.
+				Service thread is the thread that opens for each successful client connection and "talks" to the client.
+Parameters	– *t_socket - new player socket connection as provided from calling ServerMain
+Returns		– All happy path returns are SUCCESS_CODE's to ensure constant server opperation. If failure is detected, relevant message is written to log/console and program exits
 */
 static DWORD ServiceThread(SOCKET *t_socket) 
 {
@@ -287,14 +288,16 @@ static DWORD ServiceThread(SOCKET *t_socket)
 		{
 			printf("Service socket error while reading, closing thread.\n");
 			printServerLog("Custom message: Service socket error while reading, closing thread.\n", true);
-			init_newGame();
-			return SUCCESS_CODE;
+			//init_newGame();
+			closesocket(*t_socket);
+			exit(ERROR_CODE);
 		}
 		else if (RecvRes == TRNS_DISCONNECTED)
 		{
 			printf("Player disconnected. Ending communication.\n");
 			printServerLog("Player disconnected. Ending communication.\n", false);
-			init_newGame();
+			//init_newGame();
+			closesocket(*t_socket);
 			return SUCCESS_CODE;
 		}
 		// Parse message
@@ -303,7 +306,7 @@ static DWORD ServiceThread(SOCKET *t_socket)
 			continue;
 		}
 		// Handle new user request
-		if (asignThrdPlayer(paramStr, &thrdPlayer, *t_socket) != 0){
+		if (asignThrdPlayer(paramStr, &thrdPlayer) != 0){
 			// NEW_USER_DECLINED
 			ServerMSG(NEW_USER_DECLINED, NULL, *t_socket);
 			continue;	
@@ -318,9 +321,10 @@ static DWORD ServiceThread(SOCKET *t_socket)
 		}
 	}
 
-	// At this piont, a user is assigned to this thread and has a specific variable (p1,p2)
-	HANDLE player_Thrds[2];
+	// At this piont, a user is assigned to this thread and has a specific variable (p1 or p2)
+
 	// Open Helper Threads 
+	HANDLE player_Thrds[2];
 	player_Thrds[0] = CreateThread(
 		NULL,
 		0,
@@ -353,6 +357,14 @@ static DWORD ServiceThread(SOCKET *t_socket)
 	return SUCCESS_CODE;
 }
 
+
+/*
+Function Server_Send_Thread
+------------------------
+Description – Handles outging traffic\messages from a player that are not triggered by incoming traffic
+Parameters	– *thrdPlayer pointer to the player variable that is assigned to the handling player thread
+Returns		– This thread function returns SUCCESS_CODE if no errors are detected in called routines
+*/
 static DWORD Server_Send_Thread(player *thrdPlayer) {
 	char paramStr[MAX_MSG_SIZE];
 	bool gameStarted = true;
@@ -376,6 +388,7 @@ static DWORD Server_Send_Thread(player *thrdPlayer) {
 
 		if (thrdPlayer->result != -1) {
 			// Results are in
+			ServerMSG(BOARD_VIEW, boardUpdate, thrdPlayer->S);
 			ServerMSG(GAME_ENDED, NULL, thrdPlayer->S);
 			keepWorking = false;
 		}
@@ -385,6 +398,14 @@ static DWORD Server_Send_Thread(player *thrdPlayer) {
 	return (SUCCESS_CODE);
 }
 
+
+/*
+Function
+------------------------
+Description –
+Parameters	– *thrdPlayer pointer to the player variable that is assigned to the handling player thread
+Returns		–
+*/
 static DWORD Server_Rec_Thread(player *thrdPlayer) {
 	char AcceptedStr[MAX_MSG_SIZE];
 	char paramStr[MAX_MSG_SIZE];
@@ -401,14 +422,16 @@ static DWORD Server_Rec_Thread(player *thrdPlayer) {
 		{
 			printf("Service socket error while reading, closing thread.\n");
 			printServerLog("Custom message: Service socket error while reading, closing thread.\n", false);
-			thrdPlayer->playing = false;	// Signal thrd
-			return SUCCESS_CODE;
+			// thrdPlayer->playing = false;	// Signal thrd
+			init_newGame();
+			exit(ERROR_CODE);
 		}
 		else if (RecvRes == TRNS_DISCONNECTED)
 		{
 			printf("Player disconnected. Ending communication.\n");
 			printServerLog("Player disconnected. Ending communication.\n", false);
-			thrdPlayer->playing = false;	// Signal thrd
+			//thrdPlayer->playing = false;	// Signal thrd
+			init_newGame();
 			return SUCCESS_CODE;
 		}
 		if (p_count != 2) {
@@ -441,15 +464,13 @@ static DWORD Server_Rec_Thread(player *thrdPlayer) {
 // Player routines
 
 /*
-Function
+Function init_newGame
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – Inits player variables, server board game, and player counter
+Parameters	– All work is done on global variables p1,p2, serverBoard and p_count
+Returns		– none
 */
-int init_newGame() {
-	int i, j;
-
+void init_newGame() {
 	p1.playing = false;
 	strcpy(p1.name, "");
 	p1.number = RED_PLAYER;
@@ -471,16 +492,16 @@ int init_newGame() {
 	p_count = 0;
 	init_server_board();
 
-	return 0;
+	return;
 }
 
 
 /*
-Function
+Function init_server_board
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – Inits the server board game
+Parameters	– serverBoard global
+Returns		– none
 */
 void init_server_board()
 {
@@ -495,13 +516,14 @@ void init_server_board()
 
 
 /*
-Function
+Function asignThrdPlayer
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – This function is called from the player main thread(ServiceThread) to assign an unused player variable to the handling thread. It also checks if user name is already taken
+				Disclaimer - This is probably over kill, it was designed for a multiplayer flow where players can log in and out at any point during the game...
+Parameters	– *name - requested username string,  **p - pointer to player variable pointer
+Returns		–  0 for function success, -1 for failure
 */
-int asignThrdPlayer(char *name, player **p, SOCKET t_socket) {
+int asignThrdPlayer(char *name, player **p) {
 	DWORD wait_res, release_res;
 	TransferResult_t SendRes;
 	int ret = 0;
@@ -552,11 +574,11 @@ int asignThrdPlayer(char *name, player **p, SOCKET t_socket) {
 
 
 /*
-Function
+Function ServerMSG
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – Handles server outgoing communication with client according to game spec, with fail detection
+Parameters	– msgType as defined in module define section , *msgStr - clean outgoing message string (if required by type), t_socket - player socket to send message
+Returns		– none
 */
 void ServerMSG(int msgType, char *msgStr, SOCKET t_socket) {
 	TransferResult_t SendRes;
@@ -632,11 +654,11 @@ void ServerMSG(int msgType, char *msgStr, SOCKET t_socket) {
 
 
 /*
-Function
+Function check_incoming_msg
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – The function checks of is an incoming message for the player (that is assigned to this thread). If message present, send it to client
+Parameters	– *thrdPlayer pointer to the player variable that is assigned to the handling player thread, t_socket - player socket connection as provided from calling ServerMain
+Returns		– none
 */
 void check_incoming_msg(player *thrdPlayer, SOCKET t_socket) {	
 	DWORD wait_res, release_res;
@@ -673,9 +695,10 @@ void check_incoming_msg(player *thrdPlayer, SOCKET t_socket) {
 /*
 Function
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – The function is called uppon play_request message, the play is checked for correctness (player turn as also confirmed), if the move is valid, PLAY_ACCEPTED msg will be sent
+				and the request is parsed for further execution, otherwise a proper PLAY_DECLINED msg is sent with description
+Parameters	– *thrdPlayer pointer to the player variable that is assigned to the handling player thread, *paramStr - clean msg string, *row_p/*col_p - pointers for passing int row/col values
+Returns		– true if play is valid, false if play is invalid
 */
 bool handle_move(char *paramStr,player *thrdPlayer, int *row_p, int *col_p) {
 	char tmpStr[MAX_MSG_SIZE];
@@ -745,13 +768,13 @@ bool handle_move(char *paramStr,player *thrdPlayer, int *row_p, int *col_p) {
 }
 
 
-
 /*
-Function
+Function send_outgoing_msg
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – Uppon SEND_MESSAGE request the function detects the other player's variable and inserts the message
+Parameters	– *thrdPlayer pointer to the player variable that is assigned to the handling player thread, t_socket - player socket connection as provided from calling ServerMain
+				, paramStr - clean msg string
+Returns		– none
 */
 void send_outgoing_msg(char *paramStr, player *thrdPlayer, SOCKET t_socket) {
 	DWORD wait_res, release_res;
@@ -766,7 +789,7 @@ void send_outgoing_msg(char *paramStr, player *thrdPlayer, SOCKET t_socket) {
 		p = &p1;
 	}
 
-	if (p == NULL) {
+	if (p == NULL) { // sanity
 		return;
 	}
 
@@ -796,11 +819,12 @@ void send_outgoing_msg(char *paramStr, player *thrdPlayer, SOCKET t_socket) {
 
 
 /*
-Function
+Function verdict_or_switch
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – After a play has been executed the function checks if there is a verdict, if not a turn switch is performed. The results and/or flags are updted and proper messaging is done by 
+				Server_Send_Thread thread function
+Parameters	– *thrdPlayer pointer to the player variable that is assigned to the handling player thread, row/col - current play's row/col position (to optimize calculation)
+Returns		– none
 */
 void verdict_or_switch(player *thrdPlayer,int row, int col) {
 	int res = getResult(thrdPlayer->number, row, col);
@@ -823,18 +847,16 @@ void verdict_or_switch(player *thrdPlayer,int row, int col) {
 			p1.result = LOOSER;
 			p2.result = WINNER;
 		}
-
-		//thrdPlayer->playing = false;
 	}
 }
 
 
 /*
-Function:
+Function: printServerLog
 ------------------------
-Description – The function receive pointer to a string and trimms the string from white spaces
-Parameters	– *str is a pointer to a string to be trimmed.
-Returns		– Retrun pointer to trimmed string
+Description – The function prints to global server log file, closes the file stream per selection
+Parameters	– *msg string to be logged, closeFile - flag to select file closure
+Returns		– none
 */
 void printServerLog(char *msg, bool closeFile) {
 	fprintf(fp_server_log, "%s", msg);
@@ -843,13 +865,14 @@ void printServerLog(char *msg, bool closeFile) {
 	}
 }
 
+
 // Connect 4 Routines
 
 /*
-Function:
+Function: getResult
 ------------------------
-Description – The function receive pointer to a string and trimms the string from white spaces
-Parameters	– *str is a pointer to a string to be trimmed.
+Description – The function returns current board result after play. (DRAW/WINNER/NO verdict)
+Parameters	– player - current player number that mode the move, row/col - current play's row/col position (to optimize calculation)
 Returns		–  -1 for no verdict, 0 for draw, 1 for red player won, 2 for yellow player won
 */
 int getResult(int player, int row, int col) {
@@ -863,12 +886,13 @@ int getResult(int player, int row, int col) {
 		return -1;
 }
 
+
 /*
-Function:
+Function: areFourConnected
 ------------------------
-Description – The function receive pointer to a string and trimms the string from white spaces
-Parameters	– *str is a pointer to a string to be trimmed.
-Returns		–  -1 for no verdict, 0 for draw, 1 for red player won, 2 for yellow player won
+Description – The function receives player number and row,col of the last play and checks if the player won
+Parameters	– player - current player number that made the last move, row/col - current play's row/col position (to optimize calculation)
+Returns		– true if the player won, false if the player did'nt win
 */
 bool areFourConnected(int player, int row, int col) {
 		// horizontalCheck 
@@ -902,11 +926,11 @@ bool areFourConnected(int player, int row, int col) {
 
 
 /*
-Function:
+Function: isBoardFull
 ------------------------
-Description – The function receive pointer to a string and trimms the string from white spaces
-Parameters	– *str is a pointer to a string to be trimmed.
-Returns		–  -1 for no verdict, 0 for draw, 1 for red player won, 2 for yellow player won
+Description – The function checks if board is full and thus declares a draw
+Parameters	– serverBoard global server score board
+Returns		–  true if board is full, false otherwise
 */
 
 bool isBoardFull() {
@@ -925,11 +949,11 @@ bool isBoardFull() {
 // String routines 
 
 /*
-Function
+Function parseMessage
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – The function parses incoming raw/dirty message according to spec protocol
+Parameters	– *in_str - raw string, *out_str - clean message string (if available)
+Returns		– message type code according to program defines
 */
 int parseMessage(char *in_str, char *out_str) {
 	int msg_type;
@@ -996,11 +1020,11 @@ int parseMessage(char *in_str, char *out_str) {
 
 
 /*
-Function
+Function removeCharacter
 ------------------------
-Description –
-Parameters	–
-Returns
+Description – The function takes a string and removes all selected character appearances, the new string is reduced accordingly
+Parameters	– * str - input string, find - selected character
+Returns		- Pointer to modified string
 */
 char* removeCharacter(char* str, char find) {
 	char temp[MAX_MSG_SIZE];
@@ -1009,7 +1033,6 @@ char* removeCharacter(char* str, char find) {
 	if (str == NULL) {
 		return NULL;
 	}
-
 	ptr = str;
 	ptr2 = temp;
 	while (*ptr != '\0') {
@@ -1026,11 +1049,11 @@ char* removeCharacter(char* str, char find) {
 
 
 /*
-Function
+Function replace_char
 ------------------------
-Description –
-Parameters	–
-Returns
+Description – The function takes a string and replaces each selected char with new provided char
+Parameters	– * str - input string, find - selected character, replace - provided character
+Returns		- Pointer to modified string
 */
 char* replace_char(char* str, char find, char replace) {
 	char *current_pos = strchr(str, find);
@@ -1043,11 +1066,11 @@ char* replace_char(char* str, char find, char replace) {
 
 
 /*
-Function
+Function insertSemicolon
 ------------------------
-Description –
-Parameters	–
-Returns
+Description – The function takes a string to be sent as game message and inserts semicolons between ' ' seperated arguments
+Parameters	– * str - input string
+Returns		- Pointer to modified string
 */
 char* insertSemicolon(char* str) {
 	char temp[MAX_MSG_SIZE];
