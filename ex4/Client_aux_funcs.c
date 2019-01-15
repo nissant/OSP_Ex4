@@ -12,6 +12,15 @@ Description		- Connect 4 - A Server/Client game With human or file mode players
 #include "SocketSendRecvTools.h"
 
 
+
+/*
+Function input_to_cmd
+
+------------------------
+Description – The function gets an input from user and crates a command to be sent to server through the socket.
+Parameters	– *input - string of the command the player entered. *cmd - output of the function. will contain the command in the correct format to be sent to the server 
+Returns		– 0 for message command or new user command. 1 for bad command. 2 for play command.
+*/
 int input_to_cmd(char *input, char *cmd)
 {
 	char tmp_input[MAX_MSG_SIZE];
@@ -85,7 +94,14 @@ int input_to_cmd(char *input, char *cmd)
 	}
 }
 
+/*
+Function cmd_to_action
 
+------------------------
+Description – The functions takes the message recieved from the server and makes appropriate action, according to the message. 
+Parameters	– *str - the string tecieve from the server
+Returns		– None
+*/
 void cmd_to_action(char *str)
 {
 	int msg_type = 0;
@@ -164,6 +180,15 @@ void cmd_to_action(char *str)
 	}
 }
 
+
+/*
+Function chk_if_all_digits
+
+------------------------
+Description – The function checks if a string contains only digits
+Parameters	– *str - the string that will be checked
+Returns		– 1 for only digits. 0 for not only digits
+*/
 int chk_if_all_digits(char *str)
 {
 	while (*str != '\0')
@@ -175,6 +200,14 @@ int chk_if_all_digits(char *str)
 	return 1;
 }
 
+/*
+Function init_board
+
+------------------------
+Description – The function initates the board array with zeroes to symbol and empty board.
+Parameters	– None
+Returns		– None
+*/
 void init_board(void)
 {
 	for (int i = 0; i < 6; i++)

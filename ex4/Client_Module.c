@@ -17,16 +17,16 @@ Description		- Connect 4 - A Server/Client game with human or file mode players
  game_started	=	0;
  my_turn		=	0;
  read_file		=	1;
- //client_log		= NULL;
+
 
 
 //Reading data coming from the server
 /*
-Function 
+Function  RecvDataThread
 ------------------------
-Description – 
-Parameters	– 
-Returns		– 
+Description – The function used to get data from the socket.
+Parameters	– None
+Returns		– Returns succes code
 */
 static DWORD RecvDataThread(void)
 {
@@ -64,13 +64,12 @@ static DWORD RecvDataThread(void)
 }
 
 
-//Sending data to the server
 /*
-Function
+Function SendDataThread
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – The function used to send data to the server.
+Parameters	– None
+Returns		– Returns succes code
 */
 static DWORD SendDataThread(void)
 {
@@ -105,11 +104,11 @@ static DWORD SendDataThread(void)
 
 //Sending data to the server
 /*
-Function
+Function player_input
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – The function gets the player's commands
+Parameters	– None
+Returns		– Returns succes code
 */
 static DWORD player_input(void)
 {
@@ -141,13 +140,13 @@ static DWORD player_input(void)
 
 
 
-//Sending data to the server
+
 /*
-Function
+Function file_input
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – The function used to get commands from text file.
+Parameters	– lpParam - parameter sent to the thread. contains the path to the commands file.
+Returns		– Returns succes code
 */
 static DWORD file_input(LPVOID lpParam)
 {
@@ -196,11 +195,11 @@ static DWORD file_input(LPVOID lpParam)
 
 
 /*
-Function
+Function MainClient
 ------------------------
-Description –
-Parameters	–
-Returns		–
+Description – Main client function. creates relevant threads and socket connection
+Parameters	– argc and argv from main.
+Returns		– Success code if there are no errors and Error code if errors detected.
 */
 void MainClient(int argc, char *argv[])
 {
